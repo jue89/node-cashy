@@ -26,5 +26,7 @@
     "varstmt": true,
     "loopfunc": true
   },
-  "dependencies": {}
+  "dependencies": {
+    "sqlite3": "^3.1.8"
+  }
 }
