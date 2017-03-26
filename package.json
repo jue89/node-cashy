@@ -1,0 +1,30 @@
+{
+  "name": "node-cashy",
+  "version": "0.0.0",
+  "description": "Accounting stuff",
+  "author": "Jue <me@jue.yt>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jue89/node-cashy.git"
+  },
+  "license": "MIT",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "mocha",
+    "pretest": "jshint lib/*.js"
+  },
+  "devDependencies": {
+    "jshint": "^2.9.4",
+    "mocha": "^3.2.0"
+  },
+  "jshintConfig": {
+    "esversion": 6,
+    "node": true,
+    "strict": true,
+    "varstmt": true,
+    "loopfunc": true
+  },
+  "dependencies": {}
+}
