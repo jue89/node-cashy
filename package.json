@@ -27,6 +27,7 @@
     "loopfunc": true
   },
   "dependencies": {
+    "json-gate": "^0.8.23",
     "sqlite3": "^3.1.8"
   }
 }
