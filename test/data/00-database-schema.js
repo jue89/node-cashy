@@ -9,5 +9,20 @@ module.exports = {
 	] ),
 	'v3': ( db ) => Promise.all( [
 		db.run( 'CREATE TABLE t4(c41 INTEGER);' )
-	] )
+	] ),
+
+	'foreign_key': ( db ) => Promise.all( [
+		db.run(
+			`CREATE TABLE parent (
+				id INTEGER NOT NULL PRIMARY KEY
+			) WITHOUT ROWID;`
+		),
+		db.run(
+			`CREATE TABLE child (
+				id INTEGER NOT NULL PRIMARY KEY,
+				parent INTEGER NOT NULL,
+				FOREIGN KEY(parent) REFERENCES parent(id) ON DELETE RESTRICT ON UPDATE RESTRICT
+			) WITHOUT ROWID;`
+		),
+	] ),
 };

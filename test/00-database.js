@@ -151,4 +151,75 @@ describe( "database", function() {
 		} ).catch( done );
 	} );
 
+	it( "should reject inserts with unkown foreign key", ( done ) => {
+		const schema = require( './data/00-database-schema.js' );
+		dbFactory( `:memory:`, [ schema.foreign_key ] ).then( ( db ) => {
+			return db.run( 'INSERT INTO parent (id) VALUES (42);' )
+				.then( () => db.run( 'INSERT INTO child (id, parent) VALUES (1, 43);' ) );
+		} ).then( () => {
+			done( new Error("Should throw an exception") );
+		} ).catch( ( e ) => {
+			if( ! /FOREIGN KEY constraint failed/.test( e.message ) ) {
+				assert.fail( e.message, 'FOREIGN KEY constraint failed', undefined, '~' );
+			}
+			done();
+		} ).catch( done );
+	} );
+
+	it( "should instert row with foreign key", ( done ) => {
+		const schema = require( './data/00-database-schema.js' );
+		dbFactory( `:memory:`, [ schema.foreign_key ] ).then( ( db ) => {
+			return db.run( 'INSERT INTO parent (id) VALUES (42);' )
+				.then( () => db.run( 'INSERT INTO child (id, parent) VALUES (1, 42);' ) );
+		} ).then( () => done( ) ).catch( done );
+	} );
+
+	it( "should reject deletes if foreign records are pointing this record", ( done ) => {
+		const schema = require( './data/00-database-schema.js' );
+		dbFactory( `:memory:`, [ schema.foreign_key ] ).then( ( db ) => {
+			return db.run( 'INSERT INTO parent (id) VALUES (42);' )
+				.then( () => db.run( 'INSERT INTO child (id, parent) VALUES (1, 42);' ) )
+				.then( () => db.run( 'DELETE FROM parent WHERE id=42;' ) );
+		} ).then( () => {
+			done( new Error("Should throw an exception") );
+		} ).catch( ( e ) => {
+			if( ! /FOREIGN KEY constraint failed/.test( e.message ) ) {
+				assert.fail( e.message, 'FOREIGN KEY constraint failed', undefined, '~' );
+			}
+			done();
+		} ).catch( done );
+	} );
+
+	it( "should delete if no foreign records are pointing this record", ( done ) => {
+		const schema = require( './data/00-database-schema.js' );
+		dbFactory( `:memory:`, [ schema.foreign_key ] ).then( ( db ) => {
+			return db.run( 'INSERT INTO parent (id) VALUES (42);' )
+				.then( () => db.run( 'DELETE FROM parent WHERE id=42;' ) );
+		} ).then( () => done() ).catch( done );
+	} );
+
+	it( "should reject updates if foreign records are pointing this record", ( done ) => {
+		const schema = require( './data/00-database-schema.js' );
+		dbFactory( `:memory:`, [ schema.foreign_key ] ).then( ( db ) => {
+			return db.run( 'INSERT INTO parent (id) VALUES (42);' )
+				.then( () => db.run( 'INSERT INTO child (id, parent) VALUES (1, 42);' ) )
+				.then( () => db.run( 'UPDATE parent SET id=41 WHERE id=42;' ) );
+		} ).then( () => {
+			done( new Error("Should throw an exception") );
+		} ).catch( ( e ) => {
+			if( ! /FOREIGN KEY constraint failed/.test( e.message ) ) {
+				assert.fail( e.message, 'FOREIGN KEY constraint failed', undefined, '~' );
+			}
+			done();
+		} ).catch( done );
+	} );
+
+	it( "should update if no foreign records are pointing this record", ( done ) => {
+		const schema = require( './data/00-database-schema.js' );
+		dbFactory( `:memory:`, [ schema.foreign_key ] ).then( ( db ) => {
+			return db.run( 'INSERT INTO parent (id) VALUES (42);' )
+				.then( () => db.run( 'UPDATE parent SET id=41 WHERE id=42;' ) );
+		} ).then( () => done() ).catch( done );
+	} );
+
 } );
