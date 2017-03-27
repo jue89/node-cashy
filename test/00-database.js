@@ -137,4 +137,18 @@ describe( "database", function() {
 		} ).catch( done );
 	} );
 
+	it( "should complain about unkown schema version", ( done ) => {
+		const schema = require( './data/00-database-schema.js' );
+		dbFactory( `${tmpdir}/db-v3-v2.sqlite`, [ schema.v1, schema.v2, schema.v3 ] ).then( ( db ) => {
+			return db.close();
+		} ).then( () => {
+			return dbFactory( `${tmpdir}/db-v3-v2.sqlite`, [ schema.v1, schema.v2 ] );
+		} ).then( () => {
+			done( new Error("Should throw an exception") );
+		} ).catch( ( e ) => {
+			assert.strictEqual( e.message, "Unkown schema version" );
+			done();
+		} ).catch( done );
+	} );
+
 } );
