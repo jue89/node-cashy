@@ -49,7 +49,7 @@ describe( "database", function() {
 			} ).then( () => {
 				return dbFactory( `${tmpdir}/nonempty.sqlite` );
 			} ),
-			"^Not a valid database$",
+			"^Not a valid database: Wrong application ID.$",
 			done
 		);
 	} );
@@ -144,7 +144,7 @@ describe( "database", function() {
 		);
 	} );
 
-	it( "should complain about unkown schema version", ( done ) => {
+	it( "should complain about unknown schema version", ( done ) => {
 		const schema = require( './data/00-database-schema.js' );
 		q.shouldReject(
 			dbFactory( `${tmpdir}/db-v3-v2.sqlite`, [ schema.v1, schema.v2, schema.v3 ] ).then( ( db ) => {
@@ -152,12 +152,12 @@ describe( "database", function() {
 			} ).then( () => {
 				return dbFactory( `${tmpdir}/db-v3-v2.sqlite`, [ schema.v1, schema.v2 ] );
 			} ),
-			"^Unkown schema version$",
+			"^Schema format from future: Update tool to the latest version.$",
 			done
 		);
 	} );
 
-	it( "should reject inserts with unkown foreign key", ( done ) => {
+	it( "should reject inserts with unknown foreign key", ( done ) => {
 		const schema = require( './data/00-database-schema.js' );
 		q.shouldReject(
 			dbFactory( `:memory:`, [ schema.foreign_key ] ).then( ( db ) => {
