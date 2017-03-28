@@ -231,4 +231,14 @@ describe( "database", function() {
 		);
 	} );
 
+	it( "should compare strings case-sensitive", ( done ) => {
+		q.shouldResolve(
+			dbFactory( `:memory:`, [] ).then( ( db ) => {
+				return db.get( 'SELECT \'a\' LIKE \'A\' AS compare;' );
+			} ),
+			( result ) => assert.strictEqual( result.compare, 0 ),
+			done
+		);
+	} );
+
 } );
