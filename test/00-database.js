@@ -32,10 +32,18 @@ describe( "database", function() {
 
 	it( "should create new database", ( done ) => {
 		q.shouldResolve(
-			dbFactory( ':memory:' ).then( ( db ) => {
+			dbFactory( { file: ':memory:' } ).then( ( db ) => {
 				return db.get( 'PRAGMA application_id;' );
 			} ),
 			( row ) => assert.strictEqual( row.application_id, 0x1337beef ),
+			done
+		);
+	} );
+
+	it( "should reject non-string database paths", ( done ) => {
+		q.shouldReject(
+			dbFactory( { file: true } ),
+			"boolean.*string",
 			done
 		);
 	} );
@@ -47,7 +55,7 @@ describe( "database", function() {
 			db.run( 'CREATE TABLE test(val);' ).then( ( ) => {
 				return db.close();
 			} ).then( () => {
-				return dbFactory( `${tmpdir}/nonempty.sqlite` );
+				return dbFactory( { file: `${tmpdir}/nonempty.sqlite` } );
 			} ),
 			"^Not a valid database: Wrong application ID.$",
 			done
@@ -56,7 +64,7 @@ describe( "database", function() {
 
 	it( "should complain about wrong schema type", ( done ) => {
 		q.shouldReject(
-			dbFactory( ':memory:', true ),
+			dbFactory( { file: ':memory:', schema: true } ),
 			"boolean.*array",
 			done
 		);
@@ -65,7 +73,7 @@ describe( "database", function() {
 	it( "should init an empty database with a schema", ( done ) => {
 		const schema = require( './data/00-database-schema.js' );
 		q.shouldResolve(
-			dbFactory( ':memory:', [ schema.v1 ] ).then( ( db ) => {
+			dbFactory( { file: ':memory:', schema: [ schema.v1 ] } ).then( ( db ) => {
 				return db.get( 'SELECT COUNT(*) as tblcnt FROM sqlite_master WHERE type=?;', 'table' )
 			} ),
 			( row ) => assert.strictEqual( row.tblcnt, 2 ),
@@ -76,10 +84,10 @@ describe( "database", function() {
 	it( "should not init an initialised database", ( done ) => {
 		const schema = require( './data/00-database-schema.js' );
 		q.shouldResolve(
-			dbFactory( `${tmpdir}/initialised.sqlite`, [ schema.v1 ] ).then( ( db ) => {
+			dbFactory( { file: `${tmpdir}/initialised.sqlite`, schema: [ schema.v1 ] } ).then( ( db ) => {
 				return db.close();
 			} ).then( () => {
-				return dbFactory( `${tmpdir}/initialised.sqlite`, [ schema.v1 ] );
+				return dbFactory( { file: `${tmpdir}/initialised.sqlite`, schema: [ schema.v1 ] } );
 			} ).then( ( db ) => {
 				return db.get( 'SELECT COUNT(*) as tblcnt FROM sqlite_master WHERE type=?;', 'table' )
 			} ),
@@ -91,10 +99,10 @@ describe( "database", function() {
 	it( "should update a database schema", ( done ) => {
 		const schema = require( './data/00-database-schema.js' );
 		q.shouldResolve(
-			dbFactory( `${tmpdir}/db-v1-v2.sqlite`, [ schema.v1 ] ).then( ( db ) => {
+			dbFactory( { file: `${tmpdir}/db-v1-v2.sqlite`, schema: [ schema.v1 ] } ).then( ( db ) => {
 				return db.close();
 			} ).then( () => {
-				return dbFactory( `${tmpdir}/db-v1-v2.sqlite`, [ schema.v1, schema.v2 ] );
+				return dbFactory( { file: `${tmpdir}/db-v1-v2.sqlite`, schema: [ schema.v1, schema.v2 ] } );
 			} ).then( (db ) => {
 				return db.get( 'SELECT COUNT(*) as tblcnt FROM sqlite_master WHERE type=?;', 'table' )
 			} ),
@@ -106,8 +114,8 @@ describe( "database", function() {
 	it( "should not open / update a database if schema update failed", ( done ) => {
 		const schema = require( './data/00-database-schema.js' );
 		q.shouldReject(
-			dbFactory( `${tmpdir}/db-v1fail-v2.sqlite`, [ schema.v1fail ] ).catch( () => {
-				return dbFactory( `${tmpdir}/db-v1fail-v2.sqlite`, [ schema.v1, schema.v2 ] );
+			dbFactory( { file: `${tmpdir}/db-v1fail-v2.sqlite`, schema: [ schema.v1fail ] } ).catch( () => {
+				return dbFactory( { file: `${tmpdir}/db-v1fail-v2.sqlite`, schema: [ schema.v1, schema.v2 ] } );
 			} ),
 			"^Database is an unsafe state. Last update failed!$",
 			done
@@ -117,10 +125,10 @@ describe( "database", function() {
 	it( "should update a database schema two versions at once", ( done ) => {
 		const schema = require( './data/00-database-schema.js' );
 		q.shouldResolve(
-			dbFactory( `${tmpdir}/db-v1-v3.sqlite`, [ schema.v1 ] ).then( ( db ) => {
+			dbFactory( { file: `${tmpdir}/db-v1-v3.sqlite`, schema: [ schema.v1 ] } ).then( ( db ) => {
 				return db.close();
 			} ).then( () => {
-				return dbFactory( `${tmpdir}/db-v1-v3.sqlite`, [ schema.v1, schema.v2, schema.v3 ] );
+				return dbFactory( { file: `${tmpdir}/db-v1-v3.sqlite`, schema: [ schema.v1, schema.v2, schema.v3 ] } );
 			} ).then( (db ) => {
 				return db.get( 'SELECT COUNT(*) as tblcnt FROM sqlite_master WHERE type=?;', 'table' )
 			} ),
@@ -132,10 +140,10 @@ describe( "database", function() {
 	it( "should update a database to the latest version", ( done ) => {
 		const schema = require( './data/00-database-schema.js' );
 		q.shouldResolve(
-			dbFactory( `${tmpdir}/db-v2-v3.sqlite`, [ schema.v1, schema.v2 ] ).then( ( db ) => {
+			dbFactory( { file: `${tmpdir}/db-v2-v3.sqlite`, schema: [ schema.v1, schema.v2 ] } ).then( ( db ) => {
 				return db.close();
 			} ).then( () => {
-				return dbFactory( `${tmpdir}/db-v2-v3.sqlite`, [ schema.v1, schema.v2, schema.v3 ] );
+				return dbFactory( { file: `${tmpdir}/db-v2-v3.sqlite`, schema: [ schema.v1, schema.v2, schema.v3 ] } );
 			} ).then( (db ) => {
 				return db.get( 'SELECT COUNT(*) as tblcnt FROM sqlite_master WHERE type=?;', 'table' )
 			} ),
@@ -147,10 +155,10 @@ describe( "database", function() {
 	it( "should complain about unknown schema version", ( done ) => {
 		const schema = require( './data/00-database-schema.js' );
 		q.shouldReject(
-			dbFactory( `${tmpdir}/db-v3-v2.sqlite`, [ schema.v1, schema.v2, schema.v3 ] ).then( ( db ) => {
+			dbFactory( { file: `${tmpdir}/db-v3-v2.sqlite`, schema: [ schema.v1, schema.v2, schema.v3 ] } ).then( ( db ) => {
 				return db.close();
 			} ).then( () => {
-				return dbFactory( `${tmpdir}/db-v3-v2.sqlite`, [ schema.v1, schema.v2 ] );
+				return dbFactory( { file: `${tmpdir}/db-v3-v2.sqlite`, schema: [ schema.v1, schema.v2 ] } );
 			} ),
 			"^Schema format from future: Update tool to the latest version.$",
 			done
@@ -160,7 +168,7 @@ describe( "database", function() {
 	it( "should reject inserts with unknown foreign key", ( done ) => {
 		const schema = require( './data/00-database-schema.js' );
 		q.shouldReject(
-			dbFactory( `:memory:`, [ schema.foreign_key ] ).then( ( db ) => {
+			dbFactory( { file: `:memory:`, schema: [ schema.foreign_key ] } ).then( ( db ) => {
 				return db.run( 'INSERT INTO parent (id) VALUES (42);' )
 					.then( () => db.run( 'INSERT INTO child (id, parent) VALUES (1, 43);' ) );
 			} ),
@@ -172,7 +180,7 @@ describe( "database", function() {
 	it( "should instert row with foreign key", ( done ) => {
 		const schema = require( './data/00-database-schema.js' );
 		q.shouldResolve(
-			dbFactory( `:memory:`, [ schema.foreign_key ] ).then( ( db ) => {
+			dbFactory( { file: `:memory:`, schema: [ schema.foreign_key ] } ).then( ( db ) => {
 				return db.run( 'INSERT INTO parent (id) VALUES (42);' )
 					.then( () => db.run( 'INSERT INTO child (id, parent) VALUES (1, 42);' ) );
 			} ),
@@ -184,7 +192,7 @@ describe( "database", function() {
 	it( "should reject deletes if foreign records are pointing this record", ( done ) => {
 		const schema = require( './data/00-database-schema.js' );
 		q.shouldReject(
-			dbFactory( `:memory:`, [ schema.foreign_key ] ).then( ( db ) => {
+			dbFactory( { file: `:memory:`, schema: [ schema.foreign_key ] } ).then( ( db ) => {
 				return db.run( 'INSERT INTO parent (id) VALUES (42);' )
 					.then( () => db.run( 'INSERT INTO child (id, parent) VALUES (1, 42);' ) )
 					.then( () => db.run( 'DELETE FROM parent WHERE id=42;' ) );
@@ -197,7 +205,7 @@ describe( "database", function() {
 	it( "should delete if no foreign records are pointing this record", ( done ) => {
 		const schema = require( './data/00-database-schema.js' );
 		q.shouldResolve(
-			dbFactory( `:memory:`, [ schema.foreign_key ] ).then( ( db ) => {
+			dbFactory( { file: `:memory:`, schema: [ schema.foreign_key ] } ).then( ( db ) => {
 				return db.run( 'INSERT INTO parent (id) VALUES (42);' )
 					.then( () => db.run( 'DELETE FROM parent WHERE id=42;' ) );
 			} ),
@@ -209,7 +217,7 @@ describe( "database", function() {
 	it( "should reject updates if foreign records are pointing this record", ( done ) => {
 		const schema = require( './data/00-database-schema.js' );
 		q.shouldReject(
-			dbFactory( `:memory:`, [ schema.foreign_key ] ).then( ( db ) => {
+			dbFactory( { file: `:memory:`, schema: [ schema.foreign_key ] } ).then( ( db ) => {
 				return db.run( 'INSERT INTO parent (id) VALUES (42);' )
 					.then( () => db.run( 'INSERT INTO child (id, parent) VALUES (1, 42);' ) )
 					.then( () => db.run( 'UPDATE parent SET id=41 WHERE id=42;' ) );
@@ -222,7 +230,7 @@ describe( "database", function() {
 	it( "should update if no foreign records are pointing this record", ( done ) => {
 		const schema = require( './data/00-database-schema.js' );
 		q.shouldResolve(
-			dbFactory( `:memory:`, [ schema.foreign_key ] ).then( ( db ) => {
+			dbFactory( { file: `:memory:`, schema: [ schema.foreign_key ] } ).then( ( db ) => {
 				return db.run( 'INSERT INTO parent (id) VALUES (42);' )
 					.then( () => db.run( 'UPDATE parent SET id=41 WHERE id=42;' ) );
 			} ),
@@ -233,7 +241,7 @@ describe( "database", function() {
 
 	it( "should compare strings case-sensitive", ( done ) => {
 		q.shouldResolve(
-			dbFactory( `:memory:`, [] ).then( ( db ) => {
+			dbFactory( { file: `:memory:` } ).then( ( db ) => {
 				return db.get( 'SELECT \'a\' LIKE \'A\' AS compare;' );
 			} ),
 			( result ) => assert.strictEqual( result.compare, 0 ),
