@@ -48,6 +48,32 @@ describe( "database", function() {
 		);
 	} );
 
+	it( "should allow defining different application ID", ( done ) => {
+		q.shouldResolve(
+			dbFactory( { file: ':memory:', appid: 0x7fffffff } ).then( ( db ) => {
+				return db.get( 'PRAGMA application_id;' );
+			} ),
+			( row ) => assert.strictEqual( row.application_id, 0x7fffffff ),
+			done
+		);
+	} );
+
+	it( "should reject too large application IDs", ( done ) => {
+		q.shouldReject(
+			dbFactory( { file: ':memory:', appid: 0x7fffffff + 1 } ),
+			"2147483648.*2147483647",
+			done
+		);
+	} );
+
+	it( "should complain about wrong application ID type", ( done ) => {
+		q.shouldReject(
+			dbFactory( { file: ':memory:', appid: true } ),
+			"boolean.*integer",
+			done
+		);
+	} );
+
 	it( "should reject existing databases with wrong app id and tables inside", ( done ) => {
 		const DB = require( '../lib/sqlite.js' );
 		const db = new DB( `${tmpdir}/nonempty.sqlite` );
