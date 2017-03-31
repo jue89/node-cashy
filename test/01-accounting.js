@@ -34,10 +34,56 @@ describe( "accounting", function() {
 		done();
 	} );
 
-	// should open new account
-	// should reject account creation due to wrong paramters
-	// should reject sub account creation if parent account is not present
-	// should open sub account
+	it( "should open a new account", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		q.shouldResolve(
+			a.createAccount( { id: 'test' } ).then( () => a._db )
+				.then( (db) => db.all( 'SELECT id FROM accounts;' ) ),
+			( rows ) => assert.deepStrictEqual( rows, [ { id: 'test' } ] ),
+			done
+		);
+	} );
+
+	const failsCreation = {
+		'ID too short': { id: '' },
+		'ID too long': { id: 'a'.repeat( 129 ) },
+		'ID contains invalid characters': { id: '$' }
+	};
+	for( let reason in failsCreation ) {
+		it( "should reject account creation due to wrong paramters: " + reason, ( done ) => {
+			let a = new Accounting( { file: ':memory:' } );
+			q.shouldReject(
+				a.createAccount( failsCreation[ reason ] ),
+				'JSON object property',
+				done
+			);
+		} );
+	}
+
+	it( "should open sub account", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		q.shouldResolve(
+			a.createAccount( { id: 'test' } )
+				.then( () => a.createAccount( { id: 'test/A0' } ) )
+				.then( () => a._db )
+				.then( (db) => db.all( 'SELECT id FROM accounts;' ) ),
+			( rows ) => assert.deepStrictEqual( rows, [
+				{ id: 'test' },
+				{ id: 'test/A0' }
+			] ),
+			done
+		);
+	} );
+
+	it( "should reject sub account creation if parent account is not present", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		q.shouldReject(
+			a.createAccount( { id: 'test/A0' } ),
+			"Parent account 'test' is missing",
+			done
+		);
+	} );
+
 	// should list accounts
 	// should list accounts at a specific date and ignore accounts opened later or closed earlier
 
@@ -45,6 +91,7 @@ describe( "accounting", function() {
 	// should reject transactions without given reason
 	// should reject transactions without any accounts involved
 	// should reject transactions with sum of values != 0
+	// should reject transaction if one of the involved accounts is closed
 	// should round value to configured accuracy
 	// should commit transactions
 	// should delete transactions
