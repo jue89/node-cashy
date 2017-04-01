@@ -118,7 +118,7 @@ describe( "accounting", function() {
 				dateOpened: new Date( 100 ),
 				description: "Test",
 				data: { test: true }
-			} ).then( () => a.listAccounts() ),
+			} ).then( () => a.getAccounts() ),
 			( accounts ) => assert.deepStrictEqual( accounts, [ {
 				id: 'test',
 				dateOpened: new Date( 100 ),
@@ -137,9 +137,53 @@ describe( "accounting", function() {
 				a.createAccount( { id: 'open', dateOpened: new Date( 100 ) } ),
 				a.createAccount( { id: 'openedAfter', dateOpened: new Date( 400 ) } )
 				// TODO: closed account is missing
-			] ).then( () => a.listAccounts( { date: new Date( 300 )} ) ),
+			] ).then( () => a.getAccounts( { date: new Date( 300 )} ) ),
 			( accounts ) => assert.deepStrictEqual( accounts, [ {
 				id: 'open',
+				dateOpened: new Date( 100 ),
+				dateClosed: null,
+				description: "",
+				data: null
+			} ] ),
+			done
+		);
+	} );
+
+	it( "should get account by id", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		q.shouldResolve(
+			Promise.all( [
+				a.createAccount( { id: 'test', dateOpened: new Date( 100 ) } ),
+				a.createAccount( { id: 'test2', dateOpened: new Date( 100 ) } )
+			] ).then( () => a.getAccounts( { id: 'test' } ) ),
+			( accounts ) => assert.deepStrictEqual( accounts, [ {
+				id: 'test',
+				dateOpened: new Date( 100 ),
+				dateClosed: null,
+				description: "",
+				data: null
+			} ] ),
+			done
+		);
+	} );
+
+	it( "should list accounts with matching id", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		q.shouldResolve(
+			Promise.all( [
+				a.createAccount( { id: 'test', dateOpened: new Date( 100 ) } ),
+				a.createAccount( { id: 'nope', dateOpened: new Date( 100 ) } )
+			] ).then( () => Promise.all( [
+				a.createAccount( { id: 'test/sub', dateOpened: new Date( 100 ) } )
+			] ) ).then( () => a.getAccounts( { id: 'test*' } ) ),
+			( accounts ) => assert.deepStrictEqual( accounts, [ {
+				id: 'test',
+				dateOpened: new Date( 100 ),
+				dateClosed: null,
+				description: "",
+				data: null
+			}, {
+				id: 'test/sub',
 				dateOpened: new Date( 100 ),
 				dateClosed: null,
 				description: "",
