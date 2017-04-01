@@ -34,12 +34,39 @@ describe( "accounting", function() {
 		done();
 	} );
 
-	it( "should open a new account", ( done ) => {
+	it( "should open a new account with minimal data", ( done ) => {
 		let a = new Accounting( { file: ':memory:' } );
 		q.shouldResolve(
-			a.createAccount( { id: 'test' } ).then( () => a._db )
-				.then( (db) => db.all( 'SELECT id FROM accounts;' ) ),
-			( rows ) => assert.deepStrictEqual( rows, [ { id: 'test' } ] ),
+			a.createAccount( { id: 'test' } )
+				.then( () => a._db )
+				.then( (db) => db.all( 'SELECT id, dateClosed, description, data FROM accounts;' ) ),
+			( rows ) => assert.deepStrictEqual( rows, [ {
+				id: 'test',
+				dateClosed: null,
+				description: "",
+				data: null
+			} ] ),
+			done
+		);
+	} );
+
+	it( "should open a new account with full data", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		q.shouldResolve(
+			a.createAccount( {
+				id: 'test',
+				dateOpened: new Date( 100 ),
+				dateClosed: new Date( 200 ),
+				description: "Test",
+				data: { test: true }
+			} ).then( () => a._db ).then( (db) => db.all( 'SELECT * FROM accounts;' ) ),
+			( rows ) => assert.deepStrictEqual( rows, [ {
+				id: 'test',
+				dateOpened: new Date( 100 ).toISOString(),
+				dateClosed: new Date( 200 ).toISOString(),
+				description: "Test",
+				data: '{"test":true}'
+			} ] ),
 			done
 		);
 	} );
@@ -84,14 +111,51 @@ describe( "accounting", function() {
 		);
 	} );
 
-	// should list accounts
-	// should list accounts at a specific date and ignore accounts opened later or closed earlier
+	it( "should list accounts", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		q.shouldResolve(
+			a.createAccount( {
+				id: 'test',
+				dateOpened: new Date( 100 ),
+				description: "Test",
+				data: { test: true }
+			} ).then( () => a.listAccounts() ),
+			( accounts ) => assert.deepStrictEqual( accounts, [ {
+				id: 'test',
+				dateOpened: new Date( 100 ),
+				dateClosed: null,
+				description: "Test",
+				data: { test: true }
+			} ] ),
+			done
+		);
+	} );
+
+	it( "should list accounts at a specific date and ignore accounts opened later or closed earlier", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		q.shouldResolve(
+			Promise.all( [
+				a.createAccount( { id: 'open', dateOpened: new Date( 100 ) } ),
+				a.createAccount( { id: 'openedAfter', dateOpened: new Date( 400 ) } ),
+				a.createAccount( { id: 'closed', dateOpened: new Date( 100 ), dateClosed: new Date( 200 ) } )
+			] ).then( () => a.listAccounts( { date: new Date( 300 )} ) ),
+			( accounts ) => assert.deepStrictEqual( accounts, [ {
+				id: 'open',
+				dateOpened: new Date( 100 ),
+				dateClosed: null,
+				description: "",
+				data: null
+			} ] ),
+			done
+		);
+	} );
 
 	// should create a new transaction
 	// should reject transactions without given reason
 	// should reject transactions without any accounts involved
 	// should reject transactions with sum of values != 0
 	// should reject transaction if one of the involved accounts is closed
+	// should reject transaction if one of the involved accounts isn't open at the transaction date
 	// should round value to configured accuracy
 	// should commit transactions
 	// should delete transactions
