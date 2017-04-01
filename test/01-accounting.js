@@ -56,14 +56,13 @@ describe( "accounting", function() {
 			a.createAccount( {
 				id: 'test',
 				dateOpened: new Date( 100 ),
-				dateClosed: new Date( 200 ),
 				description: "Test",
 				data: { test: true }
 			} ).then( () => a._db ).then( (db) => db.all( 'SELECT * FROM accounts;' ) ),
 			( rows ) => assert.deepStrictEqual( rows, [ {
 				id: 'test',
 				dateOpened: new Date( 100 ).toISOString(),
-				dateClosed: new Date( 200 ).toISOString(),
+				dateClosed: null,
 				description: "Test",
 				data: '{"test":true}'
 			} ] ),
@@ -136,8 +135,8 @@ describe( "accounting", function() {
 		q.shouldResolve(
 			Promise.all( [
 				a.createAccount( { id: 'open', dateOpened: new Date( 100 ) } ),
-				a.createAccount( { id: 'openedAfter', dateOpened: new Date( 400 ) } ),
-				a.createAccount( { id: 'closed', dateOpened: new Date( 100 ), dateClosed: new Date( 200 ) } )
+				a.createAccount( { id: 'openedAfter', dateOpened: new Date( 400 ) } )
+				// TODO: closed account is missing
 			] ).then( () => a.listAccounts( { date: new Date( 300 )} ) ),
 			( accounts ) => assert.deepStrictEqual( accounts, [ {
 				id: 'open',
@@ -155,7 +154,6 @@ describe( "accounting", function() {
 	// should reject transactions without any accounts involved
 	// should reject transactions with sum of values != 0
 	// should reject transaction if one of the involved accounts is closed
-	// should reject transaction if one of the involved accounts isn't open at the transaction date
 	// should round value to configured accuracy
 	// should commit transactions
 	// should delete transactions
@@ -165,6 +163,7 @@ describe( "accounting", function() {
 
 	// should close account
 	// should reject closing an account of balance != 0
+	// should reject closing an account is transactions occured after closing date
 	// should delete account
 	// should reject deleting an account if any transactions are present
 
