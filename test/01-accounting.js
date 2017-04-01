@@ -149,20 +149,94 @@ describe( "accounting", function() {
 		);
 	} );
 
-	// should create a new transaction
-	// should reject transactions without given reason
-	// should reject transactions without any accounts involved
-	// should reject transactions with sum of values != 0
-	// should reject transaction if one of the involved accounts is closed
-	// should round value to configured accuracy
+	it( "should create a new transaction", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = Promise.all( [
+			a.createAccount( { id: 'test1' } ),
+			a.createAccount( { id: 'test2' } )
+		] ).then( () => a.addTransaction( { reason: 'Test' }, {
+			test1: 1,
+			test2: -1
+		} ) ).then( () => a._db ).then( (db) => db.get(
+			'SELECT COUNT(*) AS cnt FROM flows JOIN transactions;'
+		) );
+		q.shouldResolve( test, ( rows ) => assert.strictEqual( rows.cnt, 2 ), done );
+	} );
+
+	it( "should reject transactions without given reason", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = Promise.all( [
+			a.createAccount( { id: 'test1' } ),
+			a.createAccount( { id: 'test2' } )
+		] ).then( () => a.addTransaction( {}, {
+			test1: 1,
+			test2: -1
+		} ) );
+		q.shouldReject( test, "reason.*required", done );
+	} );
+
+	it( "should reject transactions without any accounts involved", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = Promise.all( [
+			a.createAccount( { id: 'test1' } ),
+			a.createAccount( { id: 'test2' } )
+		] ).then( () => a.addTransaction( { reason: 'test' }, {} ) );
+		q.shouldReject( test, "At least two accounts must be involved in a transaction", done );
+	} );
+
+	it( "should reject transactions with sum of values != 0", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = Promise.all( [
+			a.createAccount( { id: 'test1' } ),
+			a.createAccount( { id: 'test2' } )
+		] ).then( () => a.addTransaction( { reason: 'test' }, {
+			test1: 1,
+			test2: -2
+		} ) );
+		q.shouldReject( test, "Sum of all values must be equal zero", done );
+	} );
+
+	it( "should reject transaction if one of the involved accounts is not open at transaction's date", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = Promise.all( [
+			a.createAccount( { id: 'test1', dateOpened: new Date( 300 ) } ),
+			a.createAccount( { id: 'test2', dateOpened: new Date( 100 ) } )
+			// TODO: Close test2
+		] ).then( () => a.addTransaction( { reason: 'test', date: new Date( 200 ) }, {
+			test1: 1,
+			test2: -1
+		} ) );
+		q.shouldReject( test, "test1 is not open on the date of the transaction", done );
+	} );
+
+	it( "should create a new transaction", ( done ) => {
+		let a = new Accounting( { file: ':memory:', accuracy: 4 } );
+		let test = Promise.all( [
+			a.createAccount( { id: 'test1' } ),
+			a.createAccount( { id: 'test2' } )
+		] ).then( () => a.addTransaction( { reason: 'Test' }, {
+			test1: 1,
+			test2: -1
+		} ) ).then( () => a._db ).then( (db) => db.all(
+			'SELECT account_id,value FROM flows JOIN transactions ORDER BY account_id;'
+		) );
+		q.shouldResolve( test, ( rows ) => assert.deepStrictEqual( rows, [
+			{ account_id: 'test1', value: 10000 },
+			{ account_id: 'test2', value: -10000 }
+		] ), done );
+	} );
+
+	// should fetch transactions
 	// should commit transactions
 	// should delete transactions
 	// should reject deleting commited transactions
 
 	// should get balance of an account
+	// should get balance of an account including sub accounts
 
 	// should close account
 	// should reject closing an account of balance != 0
+	// should reject closing an account has non-commited transactions
 	// should reject closing an account is transactions occured after closing date
 	// should delete account
 	// should reject deleting an account if any transactions are present
