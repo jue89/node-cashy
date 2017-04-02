@@ -514,13 +514,31 @@ describe( "accounting", function() {
 		] ).then( () => Promise.all( [
 			a.createAccount( { id: 'test1/sub', dateOpened: new Date( 0 ) } )
 		] ) ).then( () => a.getAccounts( { id: 'test1' } ) ).then( (a) => {
-			return a[0].close()
+			return a[0].close();
 		} );
 		q.shouldReject( test, "Sub accounts must be closed before closing an account", done );
 	} );
 
-	// should delete account
-	// should reject deleting an account if any transactions are present
-	// should reject deleting an account if sub accounts are present
+	it( "should delete account", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = Promise.all( [
+			a.createAccount( { id: 'test1', dateOpened: new Date( 0 ) } )
+		] ).then( () => a.getAccounts() ).then( (a) => {
+			return a[0].delete();
+		} ).then( () => a.getAccounts() );
+		q.shouldResolve( test, (a) => assert.strictEqual( a.length, 0 ), done );
+	} );
+
+	it( "should reject deleting an account if sub accounts are present", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = Promise.all( [
+			a.createAccount( { id: 'test1', dateOpened: new Date( 0 ) } )
+		] ).then( () => Promise.all( [
+			a.createAccount( { id: 'test1/sub', dateOpened: new Date( 0 ) } )
+		] ) ).then( () => a.getAccounts( { id: 'test1' } ) ).then( (a) => {
+			return a[0].delete();
+		} );
+		q.shouldReject( test, "Cannot delete accounts with sub accounts", done );
+	} );
 
 } );
