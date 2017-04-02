@@ -449,11 +449,76 @@ describe( "accounting", function() {
 		q.shouldResolve( test, ( b ) => assert.strictEqual( b, 1 ), done );
 	} );
 
-	// should close account
-	// should reject closing an account of balance != 0
-	// should reject closing an account has non-commited transactions
-	// should reject closing an account if transactions occured after closing date
-	// should reject closing an account if sub accounts are not closed
+	it( "should close account", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = Promise.all( [
+			a.createAccount( { id: 'test1', dateOpened: new Date( 0 ) } )
+		] ).then( () => a.getAccounts() ).then( ( a ) => Promise.all( [
+			a[0].close( { date: new Date( 100 )} )
+		] ) ).then( () => a.getAccounts() );
+		q.shouldResolve( test, ( a ) => assert.deepEqual( a, [ {
+			id: 'test1',
+			dateOpened: new Date( 0 ),
+			dateClosed: new Date( 100 ),
+			description: "",
+			data: null
+		} ] ), done );
+	} );
+
+	it( "should reject closing an account has non-commited transactions", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = Promise.all( [
+			a.createAccount( { id: 'test1', dateOpened: new Date( 0 ) } ),
+			a.createAccount( { id: 'test2', dateOpened: new Date( 0 ) } )
+		] ).then( () => Promise.all( [
+			a.addTransaction( { reason: 'Test', date: new Date( 100 ) }, { test1: 1, test2: -1 } )
+		] ) ).then( () => a.getAccounts() ).then( ( a ) => a[0].close() );
+		q.shouldReject( test, "Before closing an account all related transactions must be commited", done );
+	} );
+
+	it( "should reject closing an account of balance != 0", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = Promise.all( [
+			a.createAccount( { id: 'test1', dateOpened: new Date( 0 ) } ),
+			a.createAccount( { id: 'test2', dateOpened: new Date( 0 ) } )
+		] ).then( () => a.addTransaction(
+			{ reason: 'Test', date: new Date( 100 ) },
+			{ test1: 1, test2: -1 }
+		) ).then( () => a.getTransactions() ).then( ( t ) => {
+			return t[0].commit();
+		} ).then( () => a.getAccounts() ).then( ( a ) => a[0].close() );
+		q.shouldReject( test, "Before closing an account its balance must be zero", done );
+	} );
+
+	it( "should reject closing an account if transactions occured after closing date", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = Promise.all( [
+			a.createAccount( { id: 'test1', dateOpened: new Date( 0 ) } ),
+			a.createAccount( { id: 'test2', dateOpened: new Date( 0 ) } )
+		] ).then( () => Promise.all( [
+			a.addTransaction( { reason: 'Test', date: new Date( 100 ) }, { test1: 1, test2: -1 } ),
+			a.addTransaction( { reason: 'Test', date: new Date( 200 ) }, { test1: -1, test2: 1 } )
+		] ) ).then( () => a.getTransactions() ).then( (t) => Promise.all( [
+			t[0].commit(),
+			t[1].commit()
+		] ) ).then( () => a.getAccounts( { id: 'test1' } ) ).then( (a) => {
+			return a[0].close( { date: new Date( 100 )} )
+		} );
+		q.shouldReject( test, "Transactions occured after the stated closing date", done );
+	} );
+
+	it( "should reject closing an account if sub accounts are not closed", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = Promise.all( [
+			a.createAccount( { id: 'test1', dateOpened: new Date( 0 ) } )
+		] ).then( () => Promise.all( [
+			a.createAccount( { id: 'test1/sub', dateOpened: new Date( 0 ) } )
+		] ) ).then( () => a.getAccounts( { id: 'test1' } ) ).then( (a) => {
+			return a[0].close()
+		} );
+		q.shouldReject( test, "Sub accounts must be closed before closing an account", done );
+	} );
+
 	// should delete account
 	// should reject deleting an account if any transactions are present
 	// should reject deleting an account if sub accounts are present
