@@ -280,9 +280,9 @@ describe( "accounting", function() {
 			a.addTransaction( { reason: 'Test', date: new Date( 100 ) }, { test1: 1, test2: -1 } ),
 			a.addTransaction( { reason: 'Test', date: new Date( 200 ) }, { test2: 2, test3: -2 } )
 		] ) ).then( () => a.getTransactions() );
-		q.shouldResolve( test, ( t ) => assert.deepStrictEqual( t, [
-			{ reason: 'Test', date: new Date( 200 ), data: null, flow: { test2: 2, test3: -2 } },
-			{ reason: 'Test', date: new Date( 100 ), data: null, flow: { test1: 1, test2: -1 } }
+		q.shouldResolve( test, ( t ) => assert.deepEqual( t, [
+			{ _id: 2, reason: 'Test', commited: false, date: new Date( 200 ), data: null, flow: { test2: 2, test3: -2 } },
+			{ _id: 1, reason: 'Test', commited: false, date: new Date( 100 ), data: null, flow: { test1: 1, test2: -1 } }
 		] ), done );
 	} );
 
@@ -296,8 +296,8 @@ describe( "accounting", function() {
 			a.addTransaction( { reason: 'Test', date: new Date( 100 ) }, { test1: 1, test2: -1 } ),
 			a.addTransaction( { reason: 'Test', date: new Date( 200 ) }, { test2: 2, test3: -2 } )
 		] ) ).then( () => a.getTransactions( { account: 'test3' } ) );
-		q.shouldResolve( test, ( t ) => assert.deepStrictEqual( t, [
-			{ reason: 'Test', date: new Date( 200 ), data: null, flow: { test2: 2, test3: -2 } }
+		q.shouldResolve( test, ( t ) => assert.deepEqual( t, [
+			{ _id: 2, reason: 'Test', commited: false, date: new Date( 200 ), data: null, flow: { test2: 2, test3: -2 } }
 		] ), done );
 	} );
 
@@ -311,8 +311,8 @@ describe( "accounting", function() {
 			a.addTransaction( { reason: 'Test', date: new Date( 100 ) }, { test1: 1, test2: -1 } ),
 			a.addTransaction( { reason: 'Test', date: new Date( 200 ) }, { test2: 2, test3: -2 } )
 		] ) ).then( () => a.getTransactions( { after: new Date( 100 ) } ) );
-		q.shouldResolve( test, ( t ) => assert.deepStrictEqual( t, [
-			{ reason: 'Test', date: new Date( 200 ), data: null, flow: { test2: 2, test3: -2 } }
+		q.shouldResolve( test, ( t ) => assert.deepEqual( t, [
+			{ _id: 2, reason: 'Test', commited: false, date: new Date( 200 ), data: null, flow: { test2: 2, test3: -2 } }
 		] ), done );
 	} );
 
@@ -326,8 +326,8 @@ describe( "accounting", function() {
 			a.addTransaction( { reason: 'Test', date: new Date( 100 ) }, { test1: 1, test2: -1 } ),
 			a.addTransaction( { reason: 'Test', date: new Date( 200 ) }, { test2: 2, test3: -2 } )
 		] ) ).then( () => a.getTransactions( { before: new Date( 200 ) } ) );
-		q.shouldResolve( test, ( t ) => assert.deepStrictEqual( t, [
-			{ reason: 'Test', date: new Date( 100 ), data: null, flow: { test1: 1, test2: -1 } }
+		q.shouldResolve( test, ( t ) => assert.deepEqual( t, [
+			{ _id: 1, reason: 'Test', commited: false, date: new Date( 100 ), data: null, flow: { test1: 1, test2: -1 } }
 		] ), done );
 	} );
 
@@ -342,15 +342,68 @@ describe( "accounting", function() {
 			a.addTransaction( { reason: 'Test', date: new Date( 200 ) }, { test2: 2, test3: -2 } ),
 			a.addTransaction( { reason: 'Test', date: new Date( 300 ) }, { test2: 2, test3: -2 } )
 		] ) ).then( () => a.getTransactions( { before: new Date( 300 ), after: new Date( 100 ) } ) );
-		q.shouldResolve( test, ( t ) => assert.deepStrictEqual( t, [
-			{ reason: 'Test', date: new Date( 200 ), data: null, flow: { test2: 2, test3: -2 } }
+		q.shouldResolve( test, ( t ) => assert.deepEqual( t, [
+			{ _id: 2, reason: 'Test', commited: false, date: new Date( 200 ), data: null, flow: { test2: 2, test3: -2 } }
 		] ), done );
 	} );
 
-	// should fetch transactions within a time window
-	// should commit transactions
-	// should delete transactions
-	// should reject deleting commited transactions
+	it( "should commit transactions", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = Promise.all( [
+			a.createAccount( { id: 'test1', dateOpened: new Date( 0 ) } ),
+			a.createAccount( { id: 'test2', dateOpened: new Date( 0 ) } )
+		] ).then( () => Promise.all( [
+			a.addTransaction( { reason: 'Test', date: new Date( 100 ) }, { test1: 1, test2: -1 } )
+		] ) ).then( () => a.getTransactions() ).then( ( t ) => {
+			return t[0].commit();
+		} ).then( () => a.getTransactions() );
+		q.shouldResolve( test, ( t ) => assert.deepEqual( t, [
+			{ _id: 1, reason: 'Test', commited: true, date: new Date( 100 ), data: null, flow: { test1: 1, test2: -1 } }
+		] ), done );
+	} );
+
+	it( "should reject commiting commited transactions", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = Promise.all( [
+			a.createAccount( { id: 'test1', dateOpened: new Date( 0 ) } ),
+			a.createAccount( { id: 'test2', dateOpened: new Date( 0 ) } )
+		] ).then( () => Promise.all( [
+			a.addTransaction( { reason: 'Test', date: new Date( 100 ) }, { test1: 1, test2: -1 } )
+		] ) ).then( () => a.getTransactions() ).then( ( t ) => {
+			return t[0].commit();
+		} ).then( () => a.getTransactions() ).then( ( t ) => {
+			return t[0].commit();
+		} );
+		q.shouldReject( test, "Transaction already has been commited", done );
+	} );
+
+	it( "should delete transactions", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = Promise.all( [
+			a.createAccount( { id: 'test1', dateOpened: new Date( 0 ) } ),
+			a.createAccount( { id: 'test2', dateOpened: new Date( 0 ) } )
+		] ).then( () => Promise.all( [
+			a.addTransaction( { reason: 'Test', date: new Date( 100 ) }, { test1: 1, test2: -1 } )
+		] ) ).then( () => a.getTransactions() ).then( ( t ) => {
+			return t[0].delete();
+		} ).then( () => a.getTransactions() );
+		q.shouldResolve( test, ( t ) => assert.strictEqual( t.length, 0 ), done );
+	} );
+
+	it( "should reject deleting commited transactions", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = Promise.all( [
+			a.createAccount( { id: 'test1', dateOpened: new Date( 0 ) } ),
+			a.createAccount( { id: 'test2', dateOpened: new Date( 0 ) } )
+		] ).then( () => Promise.all( [
+			a.addTransaction( { reason: 'Test', date: new Date( 100 ) }, { test1: 1, test2: -1 } )
+		] ) ).then( () => a.getTransactions() ).then( ( t ) => {
+			return t[0].commit();
+		} ).then( () => a.getTransactions() ).then( ( t ) => {
+			return t[0].delete();
+		} ).then( () => a.getTransactions() );
+		q.shouldReject( test, "Deleting commited transactions is not allowed", done );
+	} );
 
 	// should get balance of an account
 	// should get balance of an account including sub accounts

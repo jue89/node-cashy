@@ -24,7 +24,8 @@
     "node": true,
     "strict": true,
     "varstmt": true,
-    "loopfunc": true
+    "loopfunc": true,
+    "proto": true
   },
   "dependencies": {
     "json-gate": "^0.8.23",
