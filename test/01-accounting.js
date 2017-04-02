@@ -253,7 +253,7 @@ describe( "accounting", function() {
 		q.shouldReject( test, "test1 is not open on the date of the transaction", done );
 	} );
 
-	it( "should create a new transaction", ( done ) => {
+	it( "should round value to stated accuracy", ( done ) => {
 		let a = new Accounting( { file: ':memory:', accuracy: 4 } );
 		let test = Promise.all( [
 			a.createAccount( { id: 'test1' } ),
@@ -270,7 +270,84 @@ describe( "accounting", function() {
 		] ), done );
 	} );
 
-	// should fetch transactions
+	it( "should fetch transactions", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = Promise.all( [
+			a.createAccount( { id: 'test1', dateOpened: new Date( 0 ) } ),
+			a.createAccount( { id: 'test2', dateOpened: new Date( 0 ) } ),
+			a.createAccount( { id: 'test3', dateOpened: new Date( 0 ) } ),
+		] ).then( () => Promise.all( [
+			a.addTransaction( { reason: 'Test', date: new Date( 100 ) }, { test1: 1, test2: -1 } ),
+			a.addTransaction( { reason: 'Test', date: new Date( 200 ) }, { test2: 2, test3: -2 } )
+		] ) ).then( () => a.getTransactions() );
+		q.shouldResolve( test, ( t ) => assert.deepStrictEqual( t, [
+			{ reason: 'Test', date: new Date( 200 ), data: null, flow: { test2: 2, test3: -2 } },
+			{ reason: 'Test', date: new Date( 100 ), data: null, flow: { test1: 1, test2: -1 } }
+		] ), done );
+	} );
+
+	it( "should fetch transactions from a stated account", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = Promise.all( [
+			a.createAccount( { id: 'test1', dateOpened: new Date( 0 ) } ),
+			a.createAccount( { id: 'test2', dateOpened: new Date( 0 ) } ),
+			a.createAccount( { id: 'test3', dateOpened: new Date( 0 ) } ),
+		] ).then( () => Promise.all( [
+			a.addTransaction( { reason: 'Test', date: new Date( 100 ) }, { test1: 1, test2: -1 } ),
+			a.addTransaction( { reason: 'Test', date: new Date( 200 ) }, { test2: 2, test3: -2 } )
+		] ) ).then( () => a.getTransactions( { account: 'test3' } ) );
+		q.shouldResolve( test, ( t ) => assert.deepStrictEqual( t, [
+			{ reason: 'Test', date: new Date( 200 ), data: null, flow: { test2: 2, test3: -2 } }
+		] ), done );
+	} );
+
+	it( "should fetch transactions after a certain date", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = Promise.all( [
+			a.createAccount( { id: 'test1', dateOpened: new Date( 0 ) } ),
+			a.createAccount( { id: 'test2', dateOpened: new Date( 0 ) } ),
+			a.createAccount( { id: 'test3', dateOpened: new Date( 0 ) } ),
+		] ).then( () => Promise.all( [
+			a.addTransaction( { reason: 'Test', date: new Date( 100 ) }, { test1: 1, test2: -1 } ),
+			a.addTransaction( { reason: 'Test', date: new Date( 200 ) }, { test2: 2, test3: -2 } )
+		] ) ).then( () => a.getTransactions( { after: new Date( 100 ) } ) );
+		q.shouldResolve( test, ( t ) => assert.deepStrictEqual( t, [
+			{ reason: 'Test', date: new Date( 200 ), data: null, flow: { test2: 2, test3: -2 } }
+		] ), done );
+	} );
+
+	it( "should fetch transactions before a certain date", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = Promise.all( [
+			a.createAccount( { id: 'test1', dateOpened: new Date( 0 ) } ),
+			a.createAccount( { id: 'test2', dateOpened: new Date( 0 ) } ),
+			a.createAccount( { id: 'test3', dateOpened: new Date( 0 ) } ),
+		] ).then( () => Promise.all( [
+			a.addTransaction( { reason: 'Test', date: new Date( 100 ) }, { test1: 1, test2: -1 } ),
+			a.addTransaction( { reason: 'Test', date: new Date( 200 ) }, { test2: 2, test3: -2 } )
+		] ) ).then( () => a.getTransactions( { before: new Date( 200 ) } ) );
+		q.shouldResolve( test, ( t ) => assert.deepStrictEqual( t, [
+			{ reason: 'Test', date: new Date( 100 ), data: null, flow: { test1: 1, test2: -1 } }
+		] ), done );
+	} );
+
+	it( "should fetch transactions within a time window", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = Promise.all( [
+			a.createAccount( { id: 'test1', dateOpened: new Date( 0 ) } ),
+			a.createAccount( { id: 'test2', dateOpened: new Date( 0 ) } ),
+			a.createAccount( { id: 'test3', dateOpened: new Date( 0 ) } ),
+		] ).then( () => Promise.all( [
+			a.addTransaction( { reason: 'Test', date: new Date( 100 ) }, { test1: 1, test2: -1 } ),
+			a.addTransaction( { reason: 'Test', date: new Date( 200 ) }, { test2: 2, test3: -2 } ),
+			a.addTransaction( { reason: 'Test', date: new Date( 300 ) }, { test2: 2, test3: -2 } )
+		] ) ).then( () => a.getTransactions( { before: new Date( 300 ), after: new Date( 100 ) } ) );
+		q.shouldResolve( test, ( t ) => assert.deepStrictEqual( t, [
+			{ reason: 'Test', date: new Date( 200 ), data: null, flow: { test2: 2, test3: -2 } }
+		] ), done );
+	} );
+
+	// should fetch transactions within a time window
 	// should commit transactions
 	// should delete transactions
 	// should reject deleting commited transactions
@@ -281,8 +358,10 @@ describe( "accounting", function() {
 	// should close account
 	// should reject closing an account of balance != 0
 	// should reject closing an account has non-commited transactions
-	// should reject closing an account is transactions occured after closing date
+	// should reject closing an account if transactions occured after closing date
+	// should reject closing an account if sub accounts are not closed
 	// should delete account
 	// should reject deleting an account if any transactions are present
+	// should reject deleting an account if sub accounts are present
 
 } );
