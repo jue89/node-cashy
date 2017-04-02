@@ -40,7 +40,7 @@ describe( "accounting", function() {
 			a.createAccount( { id: 'test' } )
 				.then( () => a._db )
 				.then( (db) => db.all( 'SELECT id, dateClosed, description, data FROM accounts;' ) ),
-			( rows ) => assert.deepStrictEqual( rows, [ {
+			( rows ) => assert.deepEqual( rows, [ {
 				id: 'test',
 				dateClosed: null,
 				description: "",
@@ -59,7 +59,7 @@ describe( "accounting", function() {
 				description: "Test",
 				data: { test: true }
 			} ).then( () => a._db ).then( (db) => db.all( 'SELECT * FROM accounts;' ) ),
-			( rows ) => assert.deepStrictEqual( rows, [ {
+			( rows ) => assert.deepEqual( rows, [ {
 				id: 'test',
 				dateOpened: new Date( 100 ).toISOString(),
 				dateClosed: null,
@@ -93,7 +93,7 @@ describe( "accounting", function() {
 				.then( () => a.createAccount( { id: 'test/A0' } ) )
 				.then( () => a._db )
 				.then( (db) => db.all( 'SELECT id FROM accounts;' ) ),
-			( rows ) => assert.deepStrictEqual( rows, [
+			( rows ) => assert.deepEqual( rows, [
 				{ id: 'test' },
 				{ id: 'test/A0' }
 			] ),
@@ -119,7 +119,7 @@ describe( "accounting", function() {
 				description: "Test",
 				data: { test: true }
 			} ).then( () => a.getAccounts() ),
-			( accounts ) => assert.deepStrictEqual( accounts, [ {
+			( accounts ) => assert.deepEqual( accounts, [ {
 				id: 'test',
 				dateOpened: new Date( 100 ),
 				dateClosed: null,
@@ -138,7 +138,7 @@ describe( "accounting", function() {
 				a.createAccount( { id: 'openedAfter', dateOpened: new Date( 400 ) } )
 				// TODO: closed account is missing
 			] ).then( () => a.getAccounts( { date: new Date( 300 )} ) ),
-			( accounts ) => assert.deepStrictEqual( accounts, [ {
+			( accounts ) => assert.deepEqual( accounts, [ {
 				id: 'open',
 				dateOpened: new Date( 100 ),
 				dateClosed: null,
@@ -156,7 +156,7 @@ describe( "accounting", function() {
 				a.createAccount( { id: 'test', dateOpened: new Date( 100 ) } ),
 				a.createAccount( { id: 'test2', dateOpened: new Date( 100 ) } )
 			] ).then( () => a.getAccounts( { id: 'test' } ) ),
-			( accounts ) => assert.deepStrictEqual( accounts, [ {
+			( accounts ) => assert.deepEqual( accounts, [ {
 				id: 'test',
 				dateOpened: new Date( 100 ),
 				dateClosed: null,
@@ -176,7 +176,7 @@ describe( "accounting", function() {
 			] ).then( () => Promise.all( [
 				a.createAccount( { id: 'test/sub', dateOpened: new Date( 100 ) } )
 			] ) ).then( () => a.getAccounts( { id: 'test*' } ) ),
-			( accounts ) => assert.deepStrictEqual( accounts, [ {
+			( accounts ) => assert.deepEqual( accounts, [ {
 				id: 'test',
 				dateOpened: new Date( 100 ),
 				dateClosed: null,
@@ -264,7 +264,7 @@ describe( "accounting", function() {
 		} ) ).then( () => a._db ).then( (db) => db.all(
 			'SELECT account_id,value FROM flows JOIN transactions ORDER BY account_id;'
 		) );
-		q.shouldResolve( test, ( rows ) => assert.deepStrictEqual( rows, [
+		q.shouldResolve( test, ( rows ) => assert.deepEqual( rows, [
 			{ account_id: 'test1', value: 10000 },
 			{ account_id: 'test2', value: -10000 }
 		] ), done );
@@ -405,8 +405,49 @@ describe( "accounting", function() {
 		q.shouldReject( test, "Deleting commited transactions is not allowed", done );
 	} );
 
-	// should get balance of an account
-	// should get balance of an account including sub accounts
+	it( "should get balance of an account", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = Promise.all( [
+			a.createAccount( { id: 'test1', dateOpened: new Date( 0 ) } ),
+			a.createAccount( { id: 'test2', dateOpened: new Date( 0 ) } )
+		] ).then( () => Promise.all( [
+			a.addTransaction( { reason: 'Test', date: new Date( 100 ) }, { test1: 1, test2: -1 } ),
+			a.addTransaction( { reason: 'Test', date: new Date( 200 ) }, { test1: 2, test2: -2 } )
+		] ) ).then( () => a.getAccounts( { id: 'test1' } ) ).then( ( a ) => {
+			return a[0].balance();
+		} );
+		q.shouldResolve( test, ( b ) => assert.strictEqual( b, 3 ), done );
+	} );
+
+	it( "should get balance of an account including sub accounts", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = Promise.all( [
+			a.createAccount( { id: 'test1', dateOpened: new Date( 0 ) } ),
+			a.createAccount( { id: 'test12', dateOpened: new Date( 0 ) } )
+		] ).then( () => Promise.all( [
+			a.createAccount( { id: 'test1/sub', dateOpened: new Date( 0 ) } ),
+		] ) ).then( () => Promise.all( [
+			a.addTransaction( { reason: 'Test', date: new Date( 100 ) }, { test1: 1, test12: -1 } ),
+			a.addTransaction( { reason: 'Test', date: new Date( 200 ) }, { 'test1/sub': 2, test12: -2 } )
+		] ) ).then( () => a.getAccounts( { id: 'test1' } ) ).then( ( a ) => {
+			return a[0].balance();
+		} );
+		q.shouldResolve( test, ( b ) => assert.strictEqual( b, 3 ), done );
+	} );
+
+	it( "should get balance of an account at a certain date", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = Promise.all( [
+			a.createAccount( { id: 'test1', dateOpened: new Date( 0 ) } ),
+			a.createAccount( { id: 'test2', dateOpened: new Date( 0 ) } )
+		] ).then( () => Promise.all( [
+			a.addTransaction( { reason: 'Test', date: new Date( 100 ) }, { test1: 1, test2: -1 } ),
+			a.addTransaction( { reason: 'Test', date: new Date( 200 ) }, { test1: 2, test2: -2 } )
+		] ) ).then( () => a.getAccounts( { id: 'test1' } ) ).then( ( a ) => {
+			return a[0].balance( { date: new Date( 100 ) } );
+		} );
+		q.shouldResolve( test, ( b ) => assert.strictEqual( b, 1 ), done );
+	} );
 
 	// should close account
 	// should reject closing an account of balance != 0

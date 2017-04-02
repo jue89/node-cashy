@@ -286,7 +286,7 @@ describe( "database", function() {
 				return db.run( 'INSERT INTO t1 (c11) VALUES (3);' )
 					.then( () => db.all( 'SELECT * FROM t1 ORDER BY rowid;' ) )
 			} ),
-			( rows ) => assert.deepStrictEqual( rows, [ { c11: 1 }, { c11: 2 }, { c11: 3 } ] ),
+			( rows ) => assert.deepEqual( rows, [ { c11: 1 }, { c11: 2 }, { c11: 3 } ] ),
 			done
 		);
 	} );
@@ -302,7 +302,7 @@ describe( "database", function() {
 				return db.run( 'INSERT INTO t1 (c11) VALUES (3);' )
 					.then( () => db.all( 'SELECT * FROM t1 ORDER BY rowid;' ) )
 			} ),
-			( rows ) => assert.deepStrictEqual( rows, [ { c11: 3 } ] ),
+			( rows ) => assert.deepEqual( rows, [ { c11: 3 } ] ),
 			done
 		);
 	} );
