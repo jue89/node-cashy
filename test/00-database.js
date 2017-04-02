@@ -40,6 +40,14 @@ describe( "database", function() {
 		);
 	} );
 
+	it( "should reject database creation if not allowed", ( done ) => {
+		q.shouldReject(
+			dbFactory( { file: `${tmpdir}/donotcreate.sqlite`, create: false } ),
+			"unable to open database file",
+			done
+		);
+	} );
+
 	it( "should reject non-string database paths", ( done ) => {
 		q.shouldReject(
 			dbFactory( { file: true } ),
