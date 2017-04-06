@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "description": "Accounting stuff",
   "author": "Jue <me@jue.yt>",
+  "main": "index.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/jue89/node-cashy.git"
