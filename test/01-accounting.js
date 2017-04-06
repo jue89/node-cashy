@@ -17,6 +17,13 @@ describe( "accounting", function() {
 		);
 	} );
 
+	it( "should create new accounting database and then close database", ( done ) => {
+		const SQLite = require( '../lib/sqlite.js' );
+		let a = new Accounting( { file: ':memory:' } );
+		let test = a.close();
+		q.shouldResolve( test, () => {}, done );
+	} );
+
 	it( "should create new accounting database with specified accuracy", ( done ) => {
 		let a = new Accounting( { file: ':memory:', accuracy: 1 } );
 		q.shouldResolve(
