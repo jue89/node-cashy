@@ -59,7 +59,7 @@ describe( "accounting", function() {
 	it( "should create new accounting database with specified accuracy and then reopen with different accuracy", ( done ) => {
 		let a = new Accounting( { file: `${tmpdir}/account-accuracy.sqlite`, accuracy: 1 } );
 		let test = a.close().then( () => {
-			let b = new Accounting( { file: `${tmpdir}/account-accuracy.sqlite`, accuracy: 2 } );
+			let b = new Accounting( { file: `${tmpdir}/account-accuracy.sqlite`, accuracy: 7 } );
 			return b._db.then( () => b._accuracy );
 		} );
 		q.shouldResolve( test, ( accuracy ) => {
@@ -67,10 +67,10 @@ describe( "accounting", function() {
 		}, done );
 	} );
 
-	it( "should reject accounting database creation with accurany larger than 4", ( done ) => {
+	it( "should reject accounting database creation with accurany larger than 7", ( done ) => {
 		assert.throws(
-			() => new Accounting( { file: ':memory:', accuracy: 5 } ),
-			/5.*4/
+			() => new Accounting( { file: ':memory:', accuracy: 8 } ),
+			/8.*7/
 		);
 		done();
 	} );
