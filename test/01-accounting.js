@@ -1,11 +1,34 @@
 'use strict';
 
 const assert = require( 'assert' );
+const fs = require( 'fs' );
 const q = require( './helper/q-assert.js' );
 
 describe( "accounting", function() {
 
 	const Accounting = require( '../lib/accounting.js' );
+
+	// Creates a tmp dir for local data
+	let tmpdir;
+	before( () => {
+		tmpdir = fs.mkdtempSync( '/tmp/cashy-test-' );
+	} );
+	after( () => {
+		deleteFolderRecursive( tmpdir );
+		function deleteFolderRecursive( path ) {
+			if( fs.existsSync( path ) ) {
+				fs.readdirSync( path ).forEach( ( file, index ) => {
+					const curPath = path + "/" + file;
+					if( fs.lstatSync( curPath ).isDirectory() ) {
+						deleteFolderRecursive( curPath );
+					} else {
+						fs.unlinkSync( curPath );
+					}
+				} );
+				fs.rmdirSync(path);
+			}
+		};
+	} );
 
 	it( "should create new accounting database", ( done ) => {
 		const SQLite = require( '../lib/sqlite.js' );
@@ -31,6 +54,17 @@ describe( "accounting", function() {
 			( row ) => assert.strictEqual( row.application_id, 0x13370001 ),
 			done
 		);
+	} );
+
+	it( "should create new accounting database with specified accuracy and then reopen with different accuracy", ( done ) => {
+		let a = new Accounting( { file: `${tmpdir}/account-accuracy.sqlite`, accuracy: 1 } );
+		let test = a.close().then( () => {
+			let b = new Accounting( { file: `${tmpdir}/account-accuracy.sqlite`, accuracy: 2 } );
+			return b._db.then( () => b._accuracy );
+		} );
+		q.shouldResolve( test, ( accuracy ) => {
+			assert.strictEqual( accuracy, 10 );
+		}, done );
 	} );
 
 	it( "should reject accounting database creation with accurany larger than 4", ( done ) => {
