@@ -240,12 +240,24 @@ describe( "accounting", function() {
 			a.createAccount( { id: 'test1' } ),
 			a.createAccount( { id: 'test2' } )
 		] ).then( () => a.addTransaction( { reason: 'Test' }, {
-			test1: 1,
-			test2: -1
+			test1: Number.MAX_SAFE_INTEGER / 100,
+			test2: -Number.MAX_SAFE_INTEGER / 100
 		} ) ).then( () => a._db ).then( (db) => db.get(
 			'SELECT COUNT(*) AS cnt FROM flows JOIN transactions;'
 		) );
 		q.shouldResolve( test, ( rows ) => assert.strictEqual( rows.cnt, 2 ), done );
+	} );
+
+	it( "should reject transaction if max integer is reached", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = Promise.all( [
+			a.createAccount( { id: 'test1' } ),
+			a.createAccount( { id: 'test2' } )
+		] ).then( () => a.addTransaction( { reason: 'Test' }, {
+			test1: Number.MAX_SAFE_INTEGER / 100 + 0.01,
+			test2: -Number.MAX_SAFE_INTEGER / 100 - 0.01
+		} ) );
+		q.shouldReject( test, "most 90071992547409.9", done );
 	} );
 
 	it( "should reject transactions without given reason", ( done ) => {
