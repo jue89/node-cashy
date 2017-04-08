@@ -248,6 +248,18 @@ describe( "accounting", function() {
 		q.shouldResolve( test, ( rows ) => assert.strictEqual( rows.cnt, 2 ), done );
 	} );
 
+	it( "should return id of created transaction", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = Promise.all( [
+			a.createAccount( { id: 'test1' } ),
+			a.createAccount( { id: 'test2' } )
+		] ).then( () => a.addTransaction( { reason: 'Test' }, {
+			test1: Number.MAX_SAFE_INTEGER / 100,
+			test2: -Number.MAX_SAFE_INTEGER / 100
+		} ) );
+		q.shouldResolve( test, ( id ) => assert.strictEqual( id, 1 ), done );
+	} );
+
 	it( "should reject transaction if max integer is reached", ( done ) => {
 		let a = new Accounting( { file: ':memory:' } );
 		let test = Promise.all( [
