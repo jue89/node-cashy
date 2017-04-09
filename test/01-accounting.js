@@ -60,10 +60,10 @@ describe( "accounting", function() {
 		let a = new Accounting( { file: `${tmpdir}/account-accuracy.sqlite`, accuracy: 1 } );
 		let test = a.close().then( () => {
 			let b = new Accounting( { file: `${tmpdir}/account-accuracy.sqlite`, accuracy: 7 } );
-			return b._db.then( () => b._accuracy );
+			return b._db.then( () => b.accuracy );
 		} );
 		q.shouldResolve( test, ( accuracy ) => {
-			assert.strictEqual( accuracy, 10 );
+			assert.strictEqual( accuracy, 1 );
 		}, done );
 	} );
 
