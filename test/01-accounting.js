@@ -442,6 +442,37 @@ describe( "accounting", function() {
 		] ), done );
 	} );
 
+	it( "should fetch transactions by id", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = Promise.all( [
+			a.createAccount( { id: 'test1', dateOpened: new Date( 0 ) } ),
+			a.createAccount( { id: 'test2', dateOpened: new Date( 0 ) } )
+		] ).then( () => Promise.all( [
+			a.addTransaction( { reason: 'Test', date: new Date( 100 ) }, { test1: 1, test2: -1 } ),
+			a.addTransaction( { reason: 'Test', date: new Date( 200 ) }, { test1: 2, test2: -2 } )
+		] ) ).then( ( id ) => a.getTransactions( { id: id[0] } ) );
+		q.shouldResolve( test, ( t ) => assert.deepEqual( t, [
+			{ id: 1, reason: 'Test', commited: false, date: new Date( 100 ), data: null, flow: { test1: 1, test2: -1 } }
+		] ), done );
+	} );
+
+	it( "should fetch non-commited transactions", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = Promise.all( [
+			a.createAccount( { id: 'test1', dateOpened: new Date( 0 ) } ),
+			a.createAccount( { id: 'test2', dateOpened: new Date( 0 ) } )
+		] ).then( () => Promise.all( [
+			a.addTransaction( { reason: 'Test', date: new Date( 100 ) }, { test1: 1, test2: -1 } ),
+			a.addTransaction( { reason: 'Test', date: new Date( 200 ) }, { test1: 2, test2: -2 } )
+		] ) )
+			.then( ( id ) => a.getTransactions( { id: id[1] } ) )
+			.then( (t) => t[0].commit() )
+			.then( () => a.getTransactions( { commited: false } ) );
+		q.shouldResolve( test, ( t ) => assert.deepEqual( t, [
+			{ id: 1, reason: 'Test', commited: false, date: new Date( 100 ), data: null, flow: { test1: 1, test2: -1 } }
+		] ), done );
+	} );
+
 	it( "should commit transactions", ( done ) => {
 		let a = new Accounting( { file: ':memory:' } );
 		let test = Promise.all( [
