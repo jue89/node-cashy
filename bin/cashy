@@ -1,0 +1,42 @@
+#!/usr/bin/env node
+
+'use strict';
+
+const fs = require( 'fs' );
+const program = require( 'commander' );
+
+// Main options
+program
+	.version( require( '../package.json' ).version )
+	.option( '-f, --file <path>', "path to database", 'cashy.sqlite' );
+
+// Load sub tools
+const REjs = /\.js$/;
+fs.readdirSync( `${__dirname}/cmds/` ).forEach( (file) => {
+	if( ! REjs.test( file ) ) return;
+	require( `${__dirname}/cmds/` + file )( program );
+} );
+
+// Catch all
+program.on( '*', function( argv ) {
+	// Go through the list of available commands
+	for( let c of this.commands ) {
+		if( c._name === argv[0] ) return;
+	}
+
+	// At this point no matching command has been found -> display help
+	console.log( `\n  Unknown command: ${argv[0]}` );
+	this.help();
+});
+
+// Process args if any available
+if( process.argv.length <= 2 ) {
+	program.help();
+} else {
+	try{
+		program.parse( process.argv );
+	} catch( e ) {
+		console.error( e.message );
+		process.exit( 1 );
+	}
+}

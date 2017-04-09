@@ -4,6 +4,9 @@
   "description": "Accounting stuff",
   "author": "Jue <me@jue.yt>",
   "main": "index.js",
+  "bin": {
+    "cashy": "bin/cashy"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/jue89/node-cashy.git"
@@ -29,6 +32,7 @@
     "proto": true
   },
   "dependencies": {
+    "commander": "^2.9.0",
     "json-gate": "^0.8.23",
     "sqlite3": "^3.1.8"
   }
