@@ -151,6 +151,36 @@ describe( "accounting", function() {
 		);
 	} );
 
+	it( "should reject sub account creation if parent account has been opened in the future", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		q.shouldReject(
+			a.createAccount( {
+				id: 'test',
+				dateOpened: new Date( 200 )
+			} ).then( () => a.createAccount( {
+				id: 'test/A0',
+				dateOpened: new Date( 100 )
+			} ) ),
+			"opened in the future",
+			done
+		);
+	} );
+
+	it( "should reject sub account creation if parent account has been closed", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		q.shouldReject(
+			a.createAccount( {
+				id: 'test'
+			} ).then( () => a.getAccounts() ).then( (a) => {
+				return a[0].close();
+			} ).then( () => a.createAccount( {
+				id: 'test/A0'
+			} ) ),
+			"closed",
+			done
+		);
+	} );
+
 	it( "should list accounts", ( done ) => {
 		let a = new Accounting( { file: ':memory:' } );
 		q.shouldResolve(
