@@ -17,7 +17,7 @@
   },
   "scripts": {
     "test": "mocha",
-    "pretest": "jshint lib/*.js lib/accounting/*.js bin/* bin/cmds/*.js"
+    "pretest": "jshint lib/*.js lib/accounting/*.js bin/* bin/cmds/*.js bin/lib/*.js"
   },
   "devDependencies": {
     "jshint": "^2.9.4",
@@ -32,6 +32,7 @@
     "proto": true
   },
   "dependencies": {
+    "cli-color": "^1.2.0",
     "commander": "^2.9.0",
     "json-gate": "^0.8.23",
     "sqlite3": "^3.1.8"
