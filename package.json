@@ -17,7 +17,7 @@
   },
   "scripts": {
     "test": "mocha",
-    "pretest": "jshint lib/*.js"
+    "pretest": "jshint lib/*.js lib/accounting/*.js bin/* bin/cmds/*.js"
   },
   "devDependencies": {
     "jshint": "^2.9.4",
