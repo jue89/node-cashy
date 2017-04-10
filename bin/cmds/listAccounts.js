@@ -33,12 +33,14 @@ function createAccount( opts ) {
 
 		} else {
 
+			// Heading
 			out.write( "ID", { pos: 1 } );
 			out.write( "Description", { pos: 30 } );
 			out.write( "Date opened", { pos: -34 } );
 			out.write( "Date closed", { pos: -17 } );
 			out.nl();
 			out.line( 'blackBright' );
+			// Body
 			for( let a of accounts ) {
 				let path = a.id.split( '/' );
 				let pos = 1 + 2 * ( path.length - 1 );

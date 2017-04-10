@@ -52,7 +52,7 @@ function balance( opts ) {
 			out.write( "Balance", { pos: -1, align: 'right' } );
 			out.nl();
 			out.line( 'blackBright' );
-			// Bidy
+			// Body
 			for( let a in accounts ) {
 				let path = accounts[a].id.split( '/' );
 				let pos = 1 + 2 * ( path.length - 1 );
@@ -64,7 +64,7 @@ function balance( opts ) {
 				out.write( format( balances[a], cashy.accuracy ), {
 					pos: -1,
 					align: 'right',
-					color: (balances[a] >= 0) ? 'green' : 'red'
+					color: (accounts[a].dateClosed) ? 'blackBright' : (balances[a] >= 0) ? 'green' : 'red'
 				} );
 				out.nl();
 			}
