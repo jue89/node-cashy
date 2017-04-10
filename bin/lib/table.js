@@ -43,6 +43,7 @@ Table.prototype.write = function( str, opts ) {
 	} } ).validate( opts );
 
 	// Create string
+	str = str.toString();
 	str = ( opts.color ) ? clc[opts.color]( str ) : str;
 	let len = clc.getStrippedLength( str );
 

@@ -37,8 +37,11 @@ function list( account, opts ) {
 
 	cashy.getTransactions( filter ).then( (transactions) => {
 
-		if( account ) listOne( transactions );
-		else listAll( transactions );
+		if( account && account.indexOf( '*' ) === -1 ) {
+			listOne( transactions );
+		} else {
+			listAll( transactions );
+		}
 
 	} ).catch( ( e ) => {
 		console.error( e.message );
@@ -55,16 +58,18 @@ function list( account, opts ) {
 		} else {
 
 			// Heading
-			out.write( "Date", { pos: 1 } );
-			out.write( "Reason", { pos: 18 } );
+			out.write( "#", { pos: 6, align: 'right' } );
+			out.write( "Date", { pos: 8 } );
+			out.write( "Reason", { pos: 25 } );
 			out.write( "Uncommited?", { pos: -15, align: 'right' } );
 			out.write( "Value", { pos: -1, align: 'right' } );
 			out.nl();
 			out.line( 'blackBright' );
 			// Body
 			for( let t of transactions ) {
-				out.write( t.date.toDateString(), { pos: 1 } );
-				out.write( t.reason, { pos: 18 } );
+				out.write( t.id, { pos: 6, align: 'right' } );
+				out.write( t.date.toDateString(), { pos: 8 } );
+				out.write( t.reason, { pos: 25 } );
 				if( ! t.commited ) out.write( '*', { pos: -15, align: 'right' } );
 				out.write( format( t.flow[account], cashy.accuracy ), {
 					pos: -1,
@@ -87,18 +92,20 @@ function list( account, opts ) {
 		} else {
 
 			// Heading
-			out.write( "Date", { pos: 1 } );
-			out.write( "Reason", { pos: 18 } );
+			out.write( "#", { pos: 6, align: 'right' } );
+			out.write( "Date", { pos: 8 } );
+			out.write( "Reason", { pos: 25 } );
 			out.write( "Uncommited?", { pos: -1, align: 'right' } );
 			out.line( 'blackBright' );
 			// Body
 			for( let t of transactions ) {
-				out.write( t.date.toDateString(), { pos: 1 } );
-				out.write( t.reason, { pos: 18 } );
+				out.write( t.id, { pos: 6, align: 'right' } );
+				out.write( t.date.toDateString(), { pos: 8 } );
+				out.write( t.reason, { pos: 25 } );
 				if( ! t.commited ) out.write( '*', { pos: -1, align: 'right' } );
 				out.nl();
 				for( let account in t.flow ) {
-					out.write( account, { pos: 3, color: 'blackBright' } );
+					out.write( account, { pos: 25, color: 'blackBright' } );
 					out.write( format( t.flow[account], cashy.accuracy ), {
 						pos: -1,
 						align: 'right',
