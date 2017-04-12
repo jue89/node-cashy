@@ -323,7 +323,7 @@ describe( "accounting", function() {
 		q.shouldReject( test, "At least two accounts must be involved in a transaction", done );
 	} );
 
-	it( "should reject transactions with sum of values != 0", ( done ) => {
+	it( "should reject transactions with sum of amounts != 0", ( done ) => {
 		let a = new Accounting( { file: ':memory:' } );
 		let test = Promise.all( [
 			a.createAccount( { id: 'test1' } ),
@@ -332,7 +332,7 @@ describe( "accounting", function() {
 			test1: 1,
 			test2: -2
 		} ) );
-		q.shouldReject( test, "Sum of all values must be equal zero", done );
+		q.shouldReject( test, "Sum of all amounts must be equal zero", done );
 	} );
 
 	it( "should reject transaction if one of the involved accounts is not open at transaction's date", ( done ) => {
@@ -348,7 +348,7 @@ describe( "accounting", function() {
 		q.shouldReject( test, "test1 is not open on the date of the transaction", done );
 	} );
 
-	it( "should round value to stated accuracy", ( done ) => {
+	it( "should round amount to stated accuracy", ( done ) => {
 		let a = new Accounting( { file: ':memory:', accuracy: 4 } );
 		let test = Promise.all( [
 			a.createAccount( { id: 'test1' } ),
@@ -357,11 +357,11 @@ describe( "accounting", function() {
 			test1: 1,
 			test2: -1
 		} ) ).then( () => a._db ).then( (db) => db.all(
-			'SELECT account_id,value FROM flows JOIN transactions ORDER BY account_id;'
+			'SELECT account_id,amount FROM flows JOIN transactions ORDER BY account_id;'
 		) );
 		q.shouldResolve( test, ( rows ) => assert.deepEqual( rows, [
-			{ account_id: 'test1', value: 10000 },
-			{ account_id: 'test2', value: -10000 }
+			{ account_id: 'test1', amount: 10000 },
+			{ account_id: 'test2', amount: -10000 }
 		] ), done );
 	} );
 

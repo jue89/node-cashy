@@ -3,7 +3,7 @@
 const Cashy = require( '../../index.js' );
 
 module.exports = (program) => program
-	.command( 'add <account1:value> <account2:value> [account3:value...]' )
+	.command( 'add <account1:amount> <account2:amount> [account3:amount...]' )
 	.option( '-r --reason <reason>', "reason for the transaction" )
 	.option( '-d --date <date>', "date of the transaction" )
 	.description( "creates new transaction" )
@@ -14,17 +14,17 @@ function add( act1, act2, actn, opts ) {
 	// Parse given accounts
 	actn.unshift( act2 );
 	actn.unshift( act1 );
-	let flowWithoutValue = null;
+	let flowWithoutAmount = null;
 	let flows = {};
 	let sum = 0;
 	for( let a in actn ) {
 		let flow = actn[a].split( ':' );
 
-		// Flow without value
+		// Flow without amount
 		if( flow.length == 1 ) {
-			// Make sure only one account is without value
-			if( flowWithoutValue !== null ) throw new Error("Value can be omitted at only one account");
-			flowWithoutValue = flow[0];
+			// Make sure only one account is without amount
+			if( flowWithoutAmount !== null ) throw new Error("Amount can be omitted at only one account");
+			flowWithoutAmount = flow[0];
 			continue;
 		}
 
@@ -32,9 +32,9 @@ function add( act1, act2, actn, opts ) {
 		sum += parseFloat( flow[1] );
 
 	}
-	if( flowWithoutValue !== null ) {
-		// Fill the account without value with
-		flows[ flowWithoutValue ] = sum * (-1);
+	if( flowWithoutAmount !== null ) {
+		// Fill the account without amount with
+		flows[ flowWithoutAmount ] = sum * (-1);
 	}
 
 	// Prepare transaction meta data
