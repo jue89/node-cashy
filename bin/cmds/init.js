@@ -5,7 +5,7 @@ const fs = require( 'fs' );
 
 module.exports = (program) => program
 	.command( 'init' )
-	.option( '-a --accuracy <number>', "sets decimal precision for database", '2' )
+	.option( '-a, --accuracy <number>', "sets decimal precision for database", '2' )
 	.description( "initialise database" )
 	.action( init );
 

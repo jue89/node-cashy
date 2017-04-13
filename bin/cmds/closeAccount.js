@@ -4,7 +4,7 @@ const Cashy = require( '../../index.js' );
 
 module.exports = (program) => program
 	.command( 'closeAccount <account_id>' )
-	.option( '-c --closed <date>', "closing date" )
+	.option( '-c, --closed <date>', "closing date" )
 	.description( "closes stated account" )
 	.action( closeAccount );
 

@@ -11,8 +11,8 @@ const out = new Table( process.stdout );
 
 module.exports = (program) => program
 	.command( 'list [account]' )
-	.option( '-a --after <date>', "list transactions after this date" )
-	.option( '-b --before <date>', "list transactions before this date" )
+	.option( '-a, --after <date>', "list transactions after this date" )
+	.option( '-b, --before <date>', "list transactions before this date" )
 	.option( '--csv', "output comma-separated account list" )
 	.description( "list transactions" )
 	.action( list );

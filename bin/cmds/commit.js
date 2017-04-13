@@ -4,7 +4,7 @@ const Cashy = require( '../../index.js' );
 
 module.exports = (program) => program
 	.command( 'commit [ids...]' )
-	.option( '-a --all', "commit all pending transactions" )
+	.option( '-a, --all', "commit all pending transactions" )
 	.description( "commit transactions" )
 	.action( add );
 

@@ -4,8 +4,8 @@ const Cashy = require( '../../index.js' );
 
 module.exports = (program) => program
 	.command( 'add <account1:amount> <account2:amount> [account3:amount...]' )
-	.option( '-r --reason <reason>', "reason for the transaction" )
-	.option( '-d --date <date>', "date of the transaction" )
+	.option( '-r, --reason <reason>', "reason for the transaction" )
+	.option( '-d, --date <date>', "date of the transaction" )
 	.description( "creates new transaction" )
 	.action( add );
 

@@ -4,8 +4,8 @@ const Cashy = require( '../../index.js' );
 
 module.exports = (program) => program
 	.command( 'createAccount <account_id>' )
-	.option( '-d --description <description>', "description for the account" )
-	.option( '-o --opened <date>', "opening date" )
+	.option( '-d, --description <description>', "description for the account" )
+	.option( '-o, --opened <date>', "opening date" )
 	.description( "creates new account" )
 	.action( createAccount );
 

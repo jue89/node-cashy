@@ -11,7 +11,7 @@ const out = new Table( process.stdout );
 
 module.exports = (program) => program
 	.command( 'balance' )
-	.option( '-d --date <date>', "balances at this date" )
+	.option( '-d, --date <date>', "balances at this date" )
 	.option( '--csv', "output comma-separated account list" )
 	.description( "list all accounts including their balances" )
 	.action( balance );
