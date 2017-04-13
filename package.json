@@ -1,8 +1,18 @@
 {
-  "name": "node-cashy",
-  "version": "0.0.0",
-  "description": "Accounting stuff",
+  "name": "cashy",
+  "version": "1.0.0",
+  "description": "Bookkeeping stuff",
+  "keywords": [
+    "ledger",
+    "bookkeeping",
+    "accounting",
+    "money"
+  ],
   "author": "Jue <me@jue.yt>",
+  "main": "index.js",
+  "bin": {
+    "cashy": "bin/cashy"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/jue89/node-cashy.git"
@@ -13,7 +23,7 @@
   },
   "scripts": {
     "test": "mocha",
-    "pretest": "jshint lib/*.js"
+    "pretest": "jshint lib/*.js lib/accounting/*.js bin/* bin/cmds/*.js bin/lib/*.js"
   },
   "devDependencies": {
     "jshint": "^2.9.4",
@@ -24,7 +34,13 @@
     "node": true,
     "strict": true,
     "varstmt": true,
-    "loopfunc": true
+    "loopfunc": true,
+    "proto": true
   },
-  "dependencies": {}
+  "dependencies": {
+    "cli-color": "^1.2.0",
+    "commander": "^2.9.0",
+    "json-gate": "^0.8.23",
+    "sqlite3": "^3.1.8"
+  }
 }
