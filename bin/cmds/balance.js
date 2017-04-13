@@ -58,8 +58,7 @@ function balance( opts ) {
 				let pos = 1 + 2 * ( path.length - 1 );
 				let caption = path.pop();
 				out.write( caption, {
-					pos: pos,
-					color: accounts[a].dateClosed ? 'blackBright' : 'white'
+					pos: pos
 				} );
 				out.write( format( balances[a], cashy.accuracy ), {
 					pos: -1,

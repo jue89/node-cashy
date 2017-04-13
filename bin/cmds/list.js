@@ -96,6 +96,10 @@ function list( account, opts ) {
 			out.write( "Date", { pos: 8 } );
 			out.write( "Reason", { pos: 25 } );
 			out.write( "Uncommited?", { pos: -1, align: 'right' } );
+			out.nl();
+			out.write( "Account", { pos: 25 } );
+			out.write( "Amount", { pos: -1, align: 'right' } );
+			out.nl();
 			out.line( 'blackBright' );
 			// Body
 			for( let t of transactions ) {
