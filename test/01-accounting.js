@@ -290,6 +290,17 @@ describe( "accounting", function() {
 		q.shouldResolve( test, ( id ) => assert.strictEqual( id, 1 ), done );
 	} );
 
+	it( "should reject transaction if one of the accounts is not present and give a helpful error message", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = Promise.all( [
+			a.createAccount( { id: 'test1' } )
+		] ).then( () => a.addTransaction( { reason: 'Test' }, {
+			test1: Number.MAX_SAFE_INTEGER / 100,
+			test2: -Number.MAX_SAFE_INTEGER / 100
+		} ) );
+		q.shouldReject( test, "test2 does not exist", done );
+	} );
+
 	it( "should reject transaction if max integer is reached", ( done ) => {
 		let a = new Accounting( { file: ':memory:' } );
 		let test = Promise.all( [
@@ -346,6 +357,20 @@ describe( "accounting", function() {
 			test2: -1
 		} ) );
 		q.shouldReject( test, "test1 is not open on the date of the transaction", done );
+	} );
+
+	it( "should reject transaction if one of the accounts is closed", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = Promise.all( [
+			a.createAccount( { id: 'test1' } ),
+			a.createAccount( { id: 'test2' } )
+		] ).then( () => a.getAccounts( { id: 'test2' } ) ).then( (accounts) => {
+			return accounts[0].close();
+		} ).then( () => a.addTransaction( { reason: 'Test' }, {
+			test1: Number.MAX_SAFE_INTEGER / 100,
+			test2: -Number.MAX_SAFE_INTEGER / 100
+		} ) );
+		q.shouldReject( test, "test2 is closed", done );
 	} );
 
 	it( "should round amount to stated accuracy", ( done ) => {
