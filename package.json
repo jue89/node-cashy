@@ -1,7 +1,13 @@
 {
   "name": "cashy",
-  "version": "0.0.0",
-  "description": "Accounting stuff",
+  "version": "1.0.0",
+  "description": "Bookkeeping stuff",
+  "keywords": [
+    "ledger",
+    "bookkeeping",
+    "accounting",
+    "money"
+  ],
   "author": "Jue <me@jue.yt>",
   "main": "index.js",
   "bin": {
