@@ -75,6 +75,14 @@ describe( "accounting", function() {
 		done();
 	} );
 
+	it( "should reject accounting database creation with missing options", ( done ) => {
+		assert.throws(
+			() => new Accounting(),
+			/object is required/
+		);
+		done();
+	} );
+
 	it( "should open a new account with minimal data", ( done ) => {
 		let a = new Accounting( { file: ':memory:' } );
 		q.shouldResolve(
@@ -109,6 +117,18 @@ describe( "accounting", function() {
 			} ] ),
 			done
 		);
+	} );
+
+	it( "should reject account creation", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = a.createAccount();
+		q.shouldReject( test, "object is required", done );
+	} );
+
+	it( "should reject account creation due to missing id", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = a.createAccount( {} );
+		q.shouldReject( test, "'id' is required", done );
 	} );
 
 	const failsCreation = {
@@ -288,6 +308,18 @@ describe( "accounting", function() {
 			test2: -Number.MAX_SAFE_INTEGER / 100
 		} ) );
 		q.shouldResolve( test, ( id ) => assert.strictEqual( id, 1 ), done );
+	} );
+
+	it( "should reject transaction if no meta data is given", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = a.addTransaction();
+		q.shouldReject( test, "object is required", done );
+	} );
+
+	it( "should reject transaction if no flows is given", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = a.addTransaction( { reason: "Test" } );
+		q.shouldReject( test, "object is required", done );
 	} );
 
 	it( "should reject transaction if one of the accounts is not present and give a helpful error message", ( done ) => {
