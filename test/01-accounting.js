@@ -284,6 +284,74 @@ describe( "accounting", function() {
 		);
 	} );
 
+	it( "should update account description", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = a.createAccount( {
+			id: 'test',
+			description: 'a',
+			dateOpened: new Date( 100 )
+		} ).then( () => a.getAccounts() ).then( (accounts) => {
+			return accounts[0].update( { description: 'b' } );
+		} ).then( () => a.getAccounts() );
+		q.shouldResolve( test, ( accounts ) => assert.deepEqual( accounts, [ {
+			id: 'test',
+			dateOpened: new Date( 100 ),
+			dateClosed: null,
+			description: 'b',
+			data: null
+		} ] ), done );
+	} );
+
+	it( "should update account data", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = a.createAccount( {
+			id: 'test',
+			data: { test: true },
+			dateOpened: new Date( 100 )
+		} ).then( () => a.getAccounts() ).then( (accounts) => {
+			return accounts[0].update( { data: { test: false } } );
+		} ).then( () => a.getAccounts() );
+		q.shouldResolve( test, ( accounts ) => assert.deepEqual( accounts, [ {
+			id: 'test',
+			dateOpened: new Date( 100 ),
+			dateClosed: null,
+			description: '',
+			data: { test: false }
+		} ] ), done );
+	} );
+
+	it( "should update account description and data", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = a.createAccount( {
+			id: 'test',
+			description: 'a',
+			data: { test: true },
+			dateOpened: new Date( 100 )
+		} ).then( () => a.getAccounts() ).then( (accounts) => {
+			return accounts[0].update( {
+				description: 'b',
+				data: { test: false }
+			} );
+		} ).then( () => a.getAccounts() );
+		q.shouldResolve( test, ( accounts ) => assert.deepEqual( accounts, [ {
+			id: 'test',
+			dateOpened: new Date( 100 ),
+			dateClosed: null,
+			description: 'b',
+			data: { test: false }
+		} ] ), done );
+	} );
+
+	it( "should reject account update if no data is given", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = a.createAccount( {
+			id: 'test'
+		} ).then( () => a.getAccounts() ).then( (accounts) => {
+			return accounts[0].update( {} );
+		} );
+		q.shouldReject( test, "No data stated", done );
+	} );
+
 	it( "should create a new transaction", ( done ) => {
 		let a = new Accounting( { file: ':memory:' } );
 		let test = Promise.all( [
