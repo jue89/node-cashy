@@ -545,7 +545,7 @@ describe( "accounting", function() {
 		] ).then( () => Promise.all( [
 			a.addTransaction( { reason: 'Test', date: new Date( 100 ) }, { test1: 1, test2: -1 } ),
 			a.addTransaction( { reason: 'Test', date: new Date( 200 ) }, { test2: 2, test3: -2 } )
-		] ) ).then( () => a.getTransactions( { before: new Date( 200 ) } ) );
+		] ) ).then( () => a.getTransactions( { before: new Date( 199 ) } ) );
 		q.shouldResolve( test, ( t ) => assert.deepEqual( t, [
 			{ id: 1, reason: 'Test', commited: false, date: new Date( 100 ), data: null, flow: { test1: 1, test2: -1 } }
 		] ), done );
@@ -561,7 +561,7 @@ describe( "accounting", function() {
 			a.addTransaction( { reason: 'Test', date: new Date( 100 ) }, { test1: 1, test2: -1 } ),
 			a.addTransaction( { reason: 'Test', date: new Date( 200 ) }, { test2: 2, test3: -2 } ),
 			a.addTransaction( { reason: 'Test', date: new Date( 300 ) }, { test2: 2, test3: -2 } )
-		] ) ).then( () => a.getTransactions( { before: new Date( 300 ), after: new Date( 100 ) } ) );
+		] ) ).then( () => a.getTransactions( { before: new Date( 299 ), after: new Date( 100 ) } ) );
 		q.shouldResolve( test, ( t ) => assert.deepEqual( t, [
 			{ id: 2, reason: 'Test', commited: false, date: new Date( 200 ), data: null, flow: { test2: 2, test3: -2 } }
 		] ), done );
