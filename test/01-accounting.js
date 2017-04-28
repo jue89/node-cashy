@@ -357,7 +357,7 @@ describe( "accounting", function() {
 		let test = Promise.all( [
 			a.createAccount( { id: 'test1' } ),
 			a.createAccount( { id: 'test2' } )
-		] ).then( () => a.addTransaction( { reason: 'Test' }, {
+		] ).then( () => a.addTransaction( { reason: 'Test', data: null }, {
 			test1: Number.MAX_SAFE_INTEGER / 100,
 			test2: -Number.MAX_SAFE_INTEGER / 100
 		} ) ).then( () => a._db ).then( (db) => db.get(
@@ -497,12 +497,18 @@ describe( "accounting", function() {
 			a.createAccount( { id: 'test2', dateOpened: new Date( 0 ) } ),
 			a.createAccount( { id: 'test3', dateOpened: new Date( 0 ) } ),
 		] ).then( () => Promise.all( [
-			a.addTransaction( { reason: 'Test', date: new Date( 100 ) }, { test1: 1, test2: -1 } ),
-			a.addTransaction( { reason: 'Test', date: new Date( 200 ) }, { test2: 2, test3: -2 } )
+			a.addTransaction(
+				{ reason: 'Test', date: new Date( 100 ), data: { test: true } },
+				{ test1: 1, test2: -1 }
+			),
+			a.addTransaction(
+				{ reason: 'Test', date: new Date( 200 ), data: { test: false } },
+				{ test2: 2, test3: -2 }
+			)
 		] ) ).then( () => a.getTransactions() );
 		q.shouldResolve( test, ( t ) => assert.deepEqual( t, [
-			{ id: 1, reason: 'Test', commited: false, date: new Date( 100 ), data: null, flow: { test1: 1, test2: -1 } },
-			{ id: 2, reason: 'Test', commited: false, date: new Date( 200 ), data: null, flow: { test2: 2, test3: -2 } }
+			{ id: 1, reason: 'Test', commited: false, date: new Date( 100 ), data: { test: true }, flow: { test1: 1, test2: -1 } },
+			{ id: 2, reason: 'Test', commited: false, date: new Date( 200 ), data: { test: false }, flow: { test2: 2, test3: -2 } }
 		] ), done );
 	} );
 
