@@ -798,7 +798,7 @@ describe( "accounting", function() {
 		q.shouldReject( test, "Cannot delete accounts with sub accounts", done );
 	} );
 
-	it( "should export database", ( done ) => {
+	it( "should export database to object", ( done ) => {
 		let a = new Accounting( { file: ':memory:' } );
 		let test = Promise.all( [
 			a.createAccount( { id: 'test1', dateOpened: new Date( 0 ) } ),
@@ -896,6 +896,174 @@ describe( "accounting", function() {
 			return a[0].close( { date: new Date( 500 ) } );
 		} ).then( () => a.export() ).then( (e) => e.toString() );
 		q.shouldResolve( test, (e) => assert.strictEqual( e, '{"accounts":[{"id":"test1","description":"","dateOpened":"1970-01-01T00:00:00.000Z","dateClosed":null,"data":null},{"id":"test1/sub","description":"","dateOpened":"1970-01-01T00:00:00.000Z","dateClosed":null,"data":null},{"id":"test2","description":"","dateOpened":"1970-01-01T00:00:00.100Z","dateClosed":"1970-01-01T00:00:00.500Z","data":null}],"transactions":[{"id":1,"date":"1970-01-01T00:00:00.200Z","reason":"Test","data":null,"commited":true,"flow":{"test1/sub":100,"test2":-100}},{"id":2,"date":"1970-01-01T00:00:00.300Z","reason":"Test","data":null,"commited":true,"flow":{"test1":-100,"test2":100}},{"id":3,"date":"1970-01-01T00:00:00.100Z","reason":"Test","data":null,"commited":false,"flow":{"test1":-10,"test1/sub":10}}]}' ), done );
-	} )
+	} );
+
+	it( "should import database from object", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = a.import( {
+			accounts: [ {
+				id: 'test1',
+				dateOpened: new Date(0),
+				dateClosed: null,
+				data: null,
+				description: ""
+			}, {
+				id: 'test1/sub',
+				dateOpened: new Date(0),
+				dateClosed: null,
+				data: null,
+				description: ""
+			}, {
+				id: 'test2',
+				dateOpened: new Date(100),
+				dateClosed: new Date(500),
+				data: null,
+				description: ""
+			} ],
+			transactions: [ {
+				id: 1,
+				date: new Date( 200 ),
+				data: null,
+				reason: "Test",
+				commited: true,
+				flow: { 'test1/sub': 100, 'test2': -100 }
+			}, {
+				id: 2,
+				date: new Date( 300 ),
+				data: null,
+				reason: "Test",
+				commited: true,
+				flow: { 'test1': -100, 'test2': 100 }
+			}, {
+				id: 3,
+				date: new Date( 100 ),
+				data: null,
+				reason: "Test",
+				commited: false,
+				flow: { 'test1/sub': 10, 'test1': -10 }
+			} ]
+		} ).then( () => Promise.all( [
+			a.getAccounts(),
+			a.getTransactions()
+		] ) );
+		q.shouldResolve( test, (res) => {
+			assert.deepEqual( res[0], [
+				{
+					id: 'test1',
+					dateOpened: new Date(0),
+					dateClosed: null,
+					data: null,
+					description: ""
+				}, {
+					id: 'test1/sub',
+					dateOpened: new Date(0),
+					dateClosed: null,
+					data: null,
+					description: ""
+				}, {
+					id: 'test2',
+					dateOpened: new Date(100),
+					dateClosed: new Date(500),
+					data: null,
+					description: ""
+				}
+			] );
+			assert.deepEqual( res[1], [ {
+				id: 3,
+				date: new Date( 100 ),
+				data: null,
+				reason: "Test",
+				commited: false,
+				flow: { 'test1/sub': 10, 'test1': -10 }
+			}, {
+				id: 1,
+				date: new Date( 200 ),
+				data: null,
+				reason: "Test",
+				commited: true,
+				flow: { 'test1/sub': 100, 'test2': -100 }
+			}, {
+				id: 2,
+				date: new Date( 300 ),
+				data: null,
+				reason: "Test",
+				commited: true,
+				flow: { 'test1': -100, 'test2': 100 }
+			} ] );
+		}, done );
+	} );
+
+	it( "should import database from string", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = a.import(
+			'{"accounts":[{"id":"test1","description":"","dateOpened":"1970-01-01T00:00:00.000Z","dateClosed":null,"data":null},{"id":"test1/sub","description":"","dateOpened":"1970-01-01T00:00:00.000Z","dateClosed":null,"data":null},{"id":"test2","description":"","dateOpened":"1970-01-01T00:00:00.100Z","dateClosed":"1970-01-01T00:00:00.500Z","data":null}],"transactions":[{"id":1,"date":"1970-01-01T00:00:00.200Z","reason":"Test","data":null,"commited":true,"flow":{"test1/sub":100,"test2":-100}},{"id":2,"date":"1970-01-01T00:00:00.300Z","reason":"Test","data":null,"commited":true,"flow":{"test1":-100,"test2":100}},{"id":3,"date":"1970-01-01T00:00:00.100Z","reason":"Test","data":null,"commited":false,"flow":{"test1":-10,"test1/sub":10}}]}'
+		).then( () => Promise.all( [
+			a.getAccounts(),
+			a.getTransactions()
+		] ) );
+		q.shouldResolve( test, (res) => {
+			assert.deepEqual( res[0], [
+				{
+					id: 'test1',
+					dateOpened: new Date(0),
+					dateClosed: null,
+					data: null,
+					description: ""
+				}, {
+					id: 'test1/sub',
+					dateOpened: new Date(0),
+					dateClosed: null,
+					data: null,
+					description: ""
+				}, {
+					id: 'test2',
+					dateOpened: new Date(100),
+					dateClosed: new Date(500),
+					data: null,
+					description: ""
+				}
+			] );
+			assert.deepEqual( res[1], [ {
+				id: 3,
+				date: new Date( 100 ),
+				data: null,
+				reason: "Test",
+				commited: false,
+				flow: { 'test1/sub': 10, 'test1': -10 }
+			}, {
+				id: 1,
+				date: new Date( 200 ),
+				data: null,
+				reason: "Test",
+				commited: true,
+				flow: { 'test1/sub': 100, 'test2': -100 }
+			}, {
+				id: 2,
+				date: new Date( 300 ),
+				data: null,
+				reason: "Test",
+				commited: true,
+				flow: { 'test1': -100, 'test2': 100 }
+			} ] );
+		}, done );
+	} );
+
+	it( "should reject importing database if no accounts are given", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = a.import( { 'transactions': [] } );
+		q.shouldReject( test, "accounts.*required", done );
+	} );
+
+	it( "should reject importing database if no transactions are given", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = a.import( { 'accounts': [] } );
+		q.shouldReject( test, "transactions.*required", done );
+	} );
+
+	it( "should reject importing database if no arguments are given", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = a.import();
+		q.shouldReject( test, "object.*required", done );
+	} );
 
 } );
