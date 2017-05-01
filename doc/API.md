@@ -75,6 +75,24 @@ The optional ```filter``` states which transactions to fetch. If multiple are st
 The returned promise contains an array of matching ```transactions```. They are an instance of Transaction. (See below.)
 
 
+### Method: export
+
+``` javascript
+cashy.export().then( ( dump ) => ... );
+```
+
+Exports the database to object ```dump```. Calling ```dump.toString()``` will convert this to a string.
+
+
+### Method: import
+
+``` javascript
+cashy.import( dump ).then( () => ... );
+```
+
+Imports ```dump``` (object or string) to the database. Please make sure that you import to an empty database or have a backup. Failed imports are not rolled back!
+
+
 ## Class: Account
 
 Every instance holds the following properties:
