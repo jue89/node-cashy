@@ -61,7 +61,7 @@ function list( account, opts ) {
 			out.write( "#", { pos: 6, align: 'right' } );
 			out.write( "Date", { pos: 8 } );
 			out.write( "Reason", { pos: 25 } );
-			out.write( "Uncommited?", { pos: -15, align: 'right' } );
+			out.write( "Uncommitted?", { pos: -15, align: 'right' } );
 			out.write( "Amount", { pos: -1, align: 'right' } );
 			out.nl();
 			out.line( 'blackBright' );
@@ -95,7 +95,7 @@ function list( account, opts ) {
 			out.write( "#", { pos: 6, align: 'right' } );
 			out.write( "Date", { pos: 8 } );
 			out.write( "Reason", { pos: 25 } );
-			out.write( "Uncommited?", { pos: -1, align: 'right' } );
+			out.write( "Uncommitted?", { pos: -1, align: 'right' } );
 			out.nl();
 			out.write( "Account", { pos: 25 } );
 			out.write( "Amount", { pos: -1, align: 'right' } );

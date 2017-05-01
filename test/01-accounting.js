@@ -75,6 +75,14 @@ describe( "accounting", function() {
 		done();
 	} );
 
+	it( "should reject accounting database creation with missing options", ( done ) => {
+		assert.throws(
+			() => new Accounting(),
+			/object is required/
+		);
+		done();
+	} );
+
 	it( "should open a new account with minimal data", ( done ) => {
 		let a = new Accounting( { file: ':memory:' } );
 		q.shouldResolve(
@@ -109,6 +117,18 @@ describe( "accounting", function() {
 			} ] ),
 			done
 		);
+	} );
+
+	it( "should reject account creation", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = a.createAccount();
+		q.shouldReject( test, "object is required", done );
+	} );
+
+	it( "should reject account creation due to missing id", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = a.createAccount( {} );
+		q.shouldReject( test, "'id' is required", done );
 	} );
 
 	const failsCreation = {
@@ -264,12 +284,80 @@ describe( "accounting", function() {
 		);
 	} );
 
+	it( "should update account description", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = a.createAccount( {
+			id: 'test',
+			description: 'a',
+			dateOpened: new Date( 100 )
+		} ).then( () => a.getAccounts() ).then( (accounts) => {
+			return accounts[0].update( { description: 'b' } );
+		} ).then( () => a.getAccounts() );
+		q.shouldResolve( test, ( accounts ) => assert.deepEqual( accounts, [ {
+			id: 'test',
+			dateOpened: new Date( 100 ),
+			dateClosed: null,
+			description: 'b',
+			data: null
+		} ] ), done );
+	} );
+
+	it( "should update account data", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = a.createAccount( {
+			id: 'test',
+			data: { test: true },
+			dateOpened: new Date( 100 )
+		} ).then( () => a.getAccounts() ).then( (accounts) => {
+			return accounts[0].update( { data: { test: false } } );
+		} ).then( () => a.getAccounts() );
+		q.shouldResolve( test, ( accounts ) => assert.deepEqual( accounts, [ {
+			id: 'test',
+			dateOpened: new Date( 100 ),
+			dateClosed: null,
+			description: '',
+			data: { test: false }
+		} ] ), done );
+	} );
+
+	it( "should update account description and data", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = a.createAccount( {
+			id: 'test',
+			description: 'a',
+			data: { test: true },
+			dateOpened: new Date( 100 )
+		} ).then( () => a.getAccounts() ).then( (accounts) => {
+			return accounts[0].update( {
+				description: 'b',
+				data: { test: false }
+			} );
+		} ).then( () => a.getAccounts() );
+		q.shouldResolve( test, ( accounts ) => assert.deepEqual( accounts, [ {
+			id: 'test',
+			dateOpened: new Date( 100 ),
+			dateClosed: null,
+			description: 'b',
+			data: { test: false }
+		} ] ), done );
+	} );
+
+	it( "should reject account update if no data is given", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = a.createAccount( {
+			id: 'test'
+		} ).then( () => a.getAccounts() ).then( (accounts) => {
+			return accounts[0].update( {} );
+		} );
+		q.shouldReject( test, "No data stated", done );
+	} );
+
 	it( "should create a new transaction", ( done ) => {
 		let a = new Accounting( { file: ':memory:' } );
 		let test = Promise.all( [
 			a.createAccount( { id: 'test1' } ),
 			a.createAccount( { id: 'test2' } )
-		] ).then( () => a.addTransaction( { reason: 'Test' }, {
+		] ).then( () => a.addTransaction( { reason: 'Test', data: null }, {
 			test1: Number.MAX_SAFE_INTEGER / 100,
 			test2: -Number.MAX_SAFE_INTEGER / 100
 		} ) ).then( () => a._db ).then( (db) => db.get(
@@ -288,6 +376,18 @@ describe( "accounting", function() {
 			test2: -Number.MAX_SAFE_INTEGER / 100
 		} ) );
 		q.shouldResolve( test, ( id ) => assert.strictEqual( id, 1 ), done );
+	} );
+
+	it( "should reject transaction if no meta data is given", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = a.addTransaction();
+		q.shouldReject( test, "object is required", done );
+	} );
+
+	it( "should reject transaction if no flows is given", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = a.addTransaction( { reason: "Test" } );
+		q.shouldReject( test, "object is required", done );
 	} );
 
 	it( "should reject transaction if one of the accounts is not present and give a helpful error message", ( done ) => {
@@ -397,12 +497,18 @@ describe( "accounting", function() {
 			a.createAccount( { id: 'test2', dateOpened: new Date( 0 ) } ),
 			a.createAccount( { id: 'test3', dateOpened: new Date( 0 ) } ),
 		] ).then( () => Promise.all( [
-			a.addTransaction( { reason: 'Test', date: new Date( 100 ) }, { test1: 1, test2: -1 } ),
-			a.addTransaction( { reason: 'Test', date: new Date( 200 ) }, { test2: 2, test3: -2 } )
+			a.addTransaction(
+				{ reason: 'Test', date: new Date( 100 ), data: { test: true } },
+				{ test1: 1, test2: -1 }
+			),
+			a.addTransaction(
+				{ reason: 'Test', date: new Date( 200 ), data: { test: false } },
+				{ test2: 2, test3: -2 }
+			)
 		] ) ).then( () => a.getTransactions() );
 		q.shouldResolve( test, ( t ) => assert.deepEqual( t, [
-			{ id: 1, reason: 'Test', commited: false, date: new Date( 100 ), data: null, flow: { test1: 1, test2: -1 } },
-			{ id: 2, reason: 'Test', commited: false, date: new Date( 200 ), data: null, flow: { test2: 2, test3: -2 } }
+			{ id: 1, reason: 'Test', commited: false, date: new Date( 100 ), data: { test: true }, flow: { test1: 1, test2: -1 } },
+			{ id: 2, reason: 'Test', commited: false, date: new Date( 200 ), data: { test: false }, flow: { test2: 2, test3: -2 } }
 		] ), done );
 	} );
 
@@ -445,7 +551,7 @@ describe( "accounting", function() {
 		] ).then( () => Promise.all( [
 			a.addTransaction( { reason: 'Test', date: new Date( 100 ) }, { test1: 1, test2: -1 } ),
 			a.addTransaction( { reason: 'Test', date: new Date( 200 ) }, { test2: 2, test3: -2 } )
-		] ) ).then( () => a.getTransactions( { before: new Date( 200 ) } ) );
+		] ) ).then( () => a.getTransactions( { before: new Date( 199 ) } ) );
 		q.shouldResolve( test, ( t ) => assert.deepEqual( t, [
 			{ id: 1, reason: 'Test', commited: false, date: new Date( 100 ), data: null, flow: { test1: 1, test2: -1 } }
 		] ), done );
@@ -461,7 +567,7 @@ describe( "accounting", function() {
 			a.addTransaction( { reason: 'Test', date: new Date( 100 ) }, { test1: 1, test2: -1 } ),
 			a.addTransaction( { reason: 'Test', date: new Date( 200 ) }, { test2: 2, test3: -2 } ),
 			a.addTransaction( { reason: 'Test', date: new Date( 300 ) }, { test2: 2, test3: -2 } )
-		] ) ).then( () => a.getTransactions( { before: new Date( 300 ), after: new Date( 100 ) } ) );
+		] ) ).then( () => a.getTransactions( { before: new Date( 299 ), after: new Date( 100 ) } ) );
 		q.shouldResolve( test, ( t ) => assert.deepEqual( t, [
 			{ id: 2, reason: 'Test', commited: false, date: new Date( 200 ), data: null, flow: { test2: 2, test3: -2 } }
 		] ), done );
@@ -690,6 +796,274 @@ describe( "accounting", function() {
 			return a[0].delete();
 		} );
 		q.shouldReject( test, "Cannot delete accounts with sub accounts", done );
+	} );
+
+	it( "should export database to object", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = Promise.all( [
+			a.createAccount( { id: 'test1', dateOpened: new Date( 0 ) } ),
+			a.createAccount( { id: 'test2', dateOpened: new Date( 100 ) } )
+		] ).then( () => Promise.all( [
+			a.createAccount( { id: 'test1/sub', dateOpened: new Date( 0 ) } )
+		] ) ).then( () => Promise.all( [
+			a.addTransaction( { reason: 'Test', date: new Date( 200 ) }, {
+				'test1/sub': 100,
+			 	'test2': -100
+			} ),
+			a.addTransaction( { reason: 'Test', date: new Date( 300 ) }, {
+				'test1': -100,
+			 	'test2': 100
+			} ),
+			a.addTransaction( { reason: 'Test', date: new Date( 100 ) }, {
+				'test1': -10,
+			 	'test1/sub': 10
+			} )
+		] ) ).then( () => a.getTransactions() ).then( (t) => Promise.all( [
+			t[1].commit(),
+			t[2].commit()
+		] ) ).then( () => a.getAccounts( { id: 'test2' } ) ).then( (a) => {
+			return a[0].close( { date: new Date( 500 ) } );
+		} ).then( () => a.export() );
+		q.shouldResolve( test, (e) => assert.deepEqual( e, {
+			accounts: [ {
+				id: 'test1',
+				dateOpened: new Date(0),
+				dateClosed: null,
+				data: null,
+				description: ""
+			}, {
+				id: 'test1/sub',
+				dateOpened: new Date(0),
+				dateClosed: null,
+				data: null,
+				description: ""
+			}, {
+				id: 'test2',
+				dateOpened: new Date(100),
+				dateClosed: new Date(500),
+				data: null,
+				description: ""
+			} ],
+			transactions: [ {
+				id: 1,
+				date: new Date( 200 ),
+				data: null,
+				reason: "Test",
+				commited: true,
+				flow: { 'test1/sub': 100, 'test2': -100 }
+			}, {
+				id: 2,
+				date: new Date( 300 ),
+				data: null,
+				reason: "Test",
+				commited: true,
+				flow: { 'test1': -100, 'test2': 100 }
+			}, {
+				id: 3,
+				date: new Date( 100 ),
+				data: null,
+				reason: "Test",
+				commited: false,
+				flow: { 'test1/sub': 10, 'test1': -10 }
+			} ]
+		} ), done );
+	} );
+
+	it( "should export database to string", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = Promise.all( [
+			a.createAccount( { id: 'test1', dateOpened: new Date( 0 ) } ),
+			a.createAccount( { id: 'test2', dateOpened: new Date( 100 ) } )
+		] ).then( () => Promise.all( [
+			a.createAccount( { id: 'test1/sub', dateOpened: new Date( 0 ) } )
+		] ) ).then( () => Promise.all( [
+			a.addTransaction( { reason: 'Test', date: new Date( 200 ) }, {
+				'test1/sub': 100,
+			 	'test2': -100
+			} ),
+			a.addTransaction( { reason: 'Test', date: new Date( 300 ) }, {
+				'test1': -100,
+			 	'test2': 100
+			} ),
+			a.addTransaction( { reason: 'Test', date: new Date( 100 ) }, {
+				'test1': -10,
+			 	'test1/sub': 10
+			} )
+		] ) ).then( () => a.getTransactions() ).then( (t) => Promise.all( [
+			t[1].commit(),
+			t[2].commit()
+		] ) ).then( () => a.getAccounts( { id: 'test2' } ) ).then( (a) => {
+			return a[0].close( { date: new Date( 500 ) } );
+		} ).then( () => a.export() ).then( (e) => e.toString() );
+		q.shouldResolve( test, (e) => assert.strictEqual( e, '{"accounts":[{"id":"test1","description":"","dateOpened":"1970-01-01T00:00:00.000Z","dateClosed":null,"data":null},{"id":"test1/sub","description":"","dateOpened":"1970-01-01T00:00:00.000Z","dateClosed":null,"data":null},{"id":"test2","description":"","dateOpened":"1970-01-01T00:00:00.100Z","dateClosed":"1970-01-01T00:00:00.500Z","data":null}],"transactions":[{"id":1,"date":"1970-01-01T00:00:00.200Z","reason":"Test","data":null,"commited":true,"flow":{"test1/sub":100,"test2":-100}},{"id":2,"date":"1970-01-01T00:00:00.300Z","reason":"Test","data":null,"commited":true,"flow":{"test1":-100,"test2":100}},{"id":3,"date":"1970-01-01T00:00:00.100Z","reason":"Test","data":null,"commited":false,"flow":{"test1":-10,"test1/sub":10}}]}' ), done );
+	} );
+
+	it( "should import database from object", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = a.import( {
+			accounts: [ {
+				id: 'test1',
+				dateOpened: new Date(0),
+				dateClosed: null,
+				data: null,
+				description: ""
+			}, {
+				id: 'test1/sub',
+				dateOpened: new Date(0),
+				dateClosed: null,
+				data: null,
+				description: ""
+			}, {
+				id: 'test2',
+				dateOpened: new Date(100),
+				dateClosed: new Date(500),
+				data: null,
+				description: ""
+			} ],
+			transactions: [ {
+				id: 1,
+				date: new Date( 200 ),
+				data: null,
+				reason: "Test",
+				commited: true,
+				flow: { 'test1/sub': 100, 'test2': -100 }
+			}, {
+				id: 2,
+				date: new Date( 300 ),
+				data: null,
+				reason: "Test",
+				commited: true,
+				flow: { 'test1': -100, 'test2': 100 }
+			}, {
+				id: 3,
+				date: new Date( 100 ),
+				data: null,
+				reason: "Test",
+				commited: false,
+				flow: { 'test1/sub': 10, 'test1': -10 }
+			} ]
+		} ).then( () => Promise.all( [
+			a.getAccounts(),
+			a.getTransactions()
+		] ) );
+		q.shouldResolve( test, (res) => {
+			assert.deepEqual( res[0], [
+				{
+					id: 'test1',
+					dateOpened: new Date(0),
+					dateClosed: null,
+					data: null,
+					description: ""
+				}, {
+					id: 'test1/sub',
+					dateOpened: new Date(0),
+					dateClosed: null,
+					data: null,
+					description: ""
+				}, {
+					id: 'test2',
+					dateOpened: new Date(100),
+					dateClosed: new Date(500),
+					data: null,
+					description: ""
+				}
+			] );
+			assert.deepEqual( res[1], [ {
+				id: 3,
+				date: new Date( 100 ),
+				data: null,
+				reason: "Test",
+				commited: false,
+				flow: { 'test1/sub': 10, 'test1': -10 }
+			}, {
+				id: 1,
+				date: new Date( 200 ),
+				data: null,
+				reason: "Test",
+				commited: true,
+				flow: { 'test1/sub': 100, 'test2': -100 }
+			}, {
+				id: 2,
+				date: new Date( 300 ),
+				data: null,
+				reason: "Test",
+				commited: true,
+				flow: { 'test1': -100, 'test2': 100 }
+			} ] );
+		}, done );
+	} );
+
+	it( "should import database from string", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = a.import(
+			'{"accounts":[{"id":"test1","description":"","dateOpened":"1970-01-01T00:00:00.000Z","dateClosed":null,"data":null},{"id":"test1/sub","description":"","dateOpened":"1970-01-01T00:00:00.000Z","dateClosed":null,"data":null},{"id":"test2","description":"","dateOpened":"1970-01-01T00:00:00.100Z","dateClosed":"1970-01-01T00:00:00.500Z","data":null}],"transactions":[{"id":1,"date":"1970-01-01T00:00:00.200Z","reason":"Test","data":null,"commited":true,"flow":{"test1/sub":100,"test2":-100}},{"id":2,"date":"1970-01-01T00:00:00.300Z","reason":"Test","data":null,"commited":true,"flow":{"test1":-100,"test2":100}},{"id":3,"date":"1970-01-01T00:00:00.100Z","reason":"Test","data":null,"commited":false,"flow":{"test1":-10,"test1/sub":10}}]}'
+		).then( () => Promise.all( [
+			a.getAccounts(),
+			a.getTransactions()
+		] ) );
+		q.shouldResolve( test, (res) => {
+			assert.deepEqual( res[0], [
+				{
+					id: 'test1',
+					dateOpened: new Date(0),
+					dateClosed: null,
+					data: null,
+					description: ""
+				}, {
+					id: 'test1/sub',
+					dateOpened: new Date(0),
+					dateClosed: null,
+					data: null,
+					description: ""
+				}, {
+					id: 'test2',
+					dateOpened: new Date(100),
+					dateClosed: new Date(500),
+					data: null,
+					description: ""
+				}
+			] );
+			assert.deepEqual( res[1], [ {
+				id: 3,
+				date: new Date( 100 ),
+				data: null,
+				reason: "Test",
+				commited: false,
+				flow: { 'test1/sub': 10, 'test1': -10 }
+			}, {
+				id: 1,
+				date: new Date( 200 ),
+				data: null,
+				reason: "Test",
+				commited: true,
+				flow: { 'test1/sub': 100, 'test2': -100 }
+			}, {
+				id: 2,
+				date: new Date( 300 ),
+				data: null,
+				reason: "Test",
+				commited: true,
+				flow: { 'test1': -100, 'test2': 100 }
+			} ] );
+		}, done );
+	} );
+
+	it( "should reject importing database if no accounts are given", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = a.import( { 'transactions': [] } );
+		q.shouldReject( test, "accounts.*required", done );
+	} );
+
+	it( "should reject importing database if no transactions are given", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = a.import( { 'accounts': [] } );
+		q.shouldReject( test, "transactions.*required", done );
+	} );
+
+	it( "should reject importing database if no arguments are given", ( done ) => {
+		let a = new Accounting( { file: ':memory:' } );
+		let test = a.import();
+		q.shouldReject( test, "object.*required", done );
 	} );
 
 } );
