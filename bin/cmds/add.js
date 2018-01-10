@@ -13,6 +13,7 @@ function add (act1, act2, actn, opts) {
 	// Parse given accounts
 	actn.unshift(act2);
 	actn.unshift(act1);
+	let invert = new RegExp(opts.parent.invert);
 	let flowWithoutAmount = null;
 	let flows = {};
 	let sum = 0;
@@ -28,11 +29,11 @@ function add (act1, act2, actn, opts) {
 		}
 
 		flows[flow[0]] = parseFloat(flow[1]);
-		sum += parseFloat(flow[1]);
+		sum += parseFloat(flow[1]) * (invert.test(flow[0]) ? -1 : 1);
 	}
 	if (flowWithoutAmount !== null) {
 		// Fill the account without amount with
-		flows[ flowWithoutAmount ] = sum * (-1);
+		flows[flowWithoutAmount] = sum * (invert.test(flowWithoutAmount) ? 1 : -1);
 	}
 
 	// Prepare transaction meta data
@@ -42,7 +43,8 @@ function add (act1, act2, actn, opts) {
 
 	Cashy({
 		create: false,
-		file: opts.parent.file
+		file: opts.parent.file,
+		invert: opts.parent.invert
 	}).addTransaction(transaction, flows).then((id) => {
 		console.log(`Added transaction: ${id}`);
 	}).catch((e) => {

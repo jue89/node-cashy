@@ -22,7 +22,8 @@ function balance (opts) {
 
 	let cashy = Cashy({
 		create: false,
-		file: opts.parent.file
+		file: opts.parent.file,
+		invert: opts.parent.invert
 	});
 
 	cashy.getAccounts(filter).then((accounts) => {

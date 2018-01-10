@@ -1063,4 +1063,36 @@ describe('accounting', function () {
 		let test = a.import();
 		q.shouldReject(test, 'object.*required', done);
 	});
+
+	it('should invert flow amounts if matching with invert statement', (done) => {
+		let a = new Accounting({ file: ':memory:', invert: '^a' });
+		let test = Promise.all([
+			a.createAccount({ id: 'a', dateOpened: new Date(0) }),
+			a.createAccount({ id: 'b', dateOpened: new Date(0) })
+		]).then(() => Promise.all([
+			a.addTransaction(
+				{ reason: 'Test', date: new Date(100) },
+				{ a: 1, b: 1 }
+			)
+		])).then(() => a.getTransactions());
+		q.shouldResolve(test, (t) => assert.deepEqual(t, [
+			{ id: 1, reason: 'Test', commited: false, date: new Date(100), data: null, flow: { a: 1, b: 1 } }
+		]), done);
+	});
+
+	it('should invert the balance of an account if matching with invert statement', (done) => {
+		let a = new Accounting({ file: ':memory:', invert: '^a' });
+		let test = Promise.all([
+			a.createAccount({ id: 'a', dateOpened: new Date(0) }),
+			a.createAccount({ id: 'b', dateOpened: new Date(0) })
+		]).then(() => Promise.all([
+			a.addTransaction(
+				{ reason: 'Test', date: new Date(100) },
+				{ a: 1, b: 1 }
+			)
+		])).then(() => a.getAccounts({ id: 'a' })).then((a) => {
+			return a[0].balance();
+		});
+		q.shouldResolve(test, (b) => assert.strictEqual(b, 1), done);
+	});
 });
