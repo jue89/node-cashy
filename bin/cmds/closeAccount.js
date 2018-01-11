@@ -10,7 +10,7 @@ module.exports = (program) => program
 
 function closeAccount (id, opts) {
 	// Closing opts
-	let closingOpts = {};
+	const closingOpts = {};
 	if (opts.closed) closingOpts.date = new Date(opts.closed);
 
 	Cashy({

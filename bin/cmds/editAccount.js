@@ -9,7 +9,7 @@ module.exports = (program) => program
 	.action(editAccount);
 
 function editAccount (id, opts) {
-	let data = {};
+	const data = {};
 	data.description = opts.description;
 
 	Cashy({

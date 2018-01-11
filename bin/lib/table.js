@@ -46,12 +46,12 @@ Table.prototype.write = function (str, opts) {
 	// Create string
 	str = str.toString();
 	str = (opts.color) ? clc[opts.color](str) : str;
-	let len = clc.getStrippedLength(str);
+	const len = clc.getStrippedLength(str);
 
 	// Move cursor
 	if (opts.align === 'right') opts.pos -= len;
 	if (opts.pos < 0) opts.pos += this._width;
-	let diff = opts.pos - this._x;
+	const diff = opts.pos - this._x;
 	this._x += diff;
 	if (diff < 0) {
 		this._out.write(clc.move.left(diff));

@@ -8,12 +8,12 @@ module.exports = (program) => program
 	.action(ex);
 
 function ex (opts) {
-	let cashy = Cashy({
+	const cashy = Cashy({
 		create: false,
 		file: opts.parent.file
 	});
 
-	let data = [];
+	const data = [];
 	process.stdin.on('data', (chunk) => data.push(chunk));
 	process.stdin.on('end', () => {
 		cashy.import(Buffer.concat(data).toString()).catch((e) => {

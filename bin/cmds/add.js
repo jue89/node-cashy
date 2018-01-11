@@ -13,12 +13,12 @@ function add (act1, act2, actn, opts) {
 	// Parse given accounts
 	actn.unshift(act2);
 	actn.unshift(act1);
-	let invert = new RegExp(opts.parent.invert);
+	const invert = new RegExp(opts.parent.invert);
 	let flowWithoutAmount = null;
-	let flows = {};
+	const flows = {};
 	let sum = 0;
 	for (let a in actn) {
-		let flow = actn[a].split(':');
+		const flow = actn[a].split(':');
 
 		// Flow without amount
 		if (flow.length === 1) {
@@ -37,7 +37,7 @@ function add (act1, act2, actn, opts) {
 	}
 
 	// Prepare transaction meta data
-	let transaction = {};
+	const transaction = {};
 	if (typeof opts.date === 'string') transaction.date = new Date(opts.date);
 	if (typeof opts.reason === 'string') transaction.reason = opts.reason;
 

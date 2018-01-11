@@ -14,7 +14,7 @@ module.exports = (program) => program
 	.action(createAccount);
 
 function createAccount (opts) {
-	let filter = {};
+	const filter = {};
 	if (typeof opts.open === 'string') {
 		filter.date = (opts.open === 'now') ? new Date() : new Date(opts.open);
 	}
@@ -37,9 +37,9 @@ function createAccount (opts) {
 			out.line('blackBright');
 			// Body
 			for (let a of accounts) {
-				let path = a.id.split('/');
-				let pos = 1 + 2 * (path.length - 1);
-				let caption = path.pop();
+				const path = a.id.split('/');
+				const pos = 1 + 2 * (path.length - 1);
+				const caption = path.pop();
 				out.write(caption, { pos: pos });
 				out.write(a.description, { pos: 30 });
 				out.write(a.dateOpened.toDateString(), { pos: -34 });

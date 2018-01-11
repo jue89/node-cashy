@@ -16,7 +16,7 @@ module.exports = (program) => program
 	.action(list);
 
 function list (account, opts) {
-	let filter = {};
+	const filter = {};
 	if (typeof opts.after === 'string') {
 		filter.after = new Date(opts.after);
 	}
@@ -27,7 +27,7 @@ function list (account, opts) {
 		filter.account = account;
 	}
 
-	let cashy = Cashy({
+	const cashy = Cashy({
 		create: false,
 		file: opts.parent.file,
 		invert: opts.parent.invert

@@ -9,7 +9,7 @@ module.exports = (program) => program
 	.action(ex);
 
 function ex (opts) {
-	let cashy = Cashy({
+	const cashy = Cashy({
 		create: false,
 		file: opts.parent.file
 	});

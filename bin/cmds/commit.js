@@ -14,7 +14,7 @@ function add (ids, opts) {
 		create: false,
 		file: opts.parent.file
 	}).getTransactions({ commited: false }).then((transactions) => {
-		let jobs = [];
+		const jobs = [];
 		for (let t of transactions) {
 			if (opts.all || ids.indexOf(t.id.toString()) !== -1) jobs.push(t.commit());
 		}

@@ -11,7 +11,7 @@ module.exports = (program) => program
 
 function createAccount (id, opts) {
 	// Create account object
-	let account = {};
+	const account = {};
 	account.id = id;
 	if (typeof opts.opened === 'string') account.dateOpened = new Date(opts.opened);
 	if (typeof opts.description === 'string') account.description = opts.description;

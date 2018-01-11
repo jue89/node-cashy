@@ -15,19 +15,19 @@ module.exports = (program) => program
 	.action(balance);
 
 function balance (opts) {
-	let filter = {};
+	const filter = {};
 	if (typeof opts.date === 'string') {
 		filter.date = (opts.date === 'now') ? new Date() : new Date(opts.date);
 	}
 
-	let cashy = Cashy({
+	const cashy = Cashy({
 		create: false,
 		file: opts.parent.file,
 		invert: opts.parent.invert
 	});
 
 	cashy.getAccounts(filter).then((accounts) => {
-		let jobs = [];
+		const jobs = [];
 		for (let a of accounts) jobs.push(a.balance(filter));
 		return Promise.all(jobs).then((balances) => [accounts, balances]);
 	}).then((args) => {
@@ -46,9 +46,9 @@ function balance (opts) {
 			out.line('blackBright');
 			// Body
 			for (let a in accounts) {
-				let path = accounts[a].id.split('/');
-				let pos = 1 + 2 * (path.length - 1);
-				let caption = path.pop();
+				const path = accounts[a].id.split('/');
+				const pos = 1 + 2 * (path.length - 1);
+				const caption = path.pop();
 				out.write(caption, {
 					pos: pos
 				});
