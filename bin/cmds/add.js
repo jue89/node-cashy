@@ -13,27 +13,10 @@ function add (act1, act2, actn, opts) {
 	// Parse given accounts
 	actn.unshift(act2);
 	actn.unshift(act1);
-	const invert = new RegExp(opts.parent.invert);
-	let flowWithoutAmount = null;
 	const flows = {};
-	let sum = 0;
 	for (let a in actn) {
 		const flow = actn[a].split(':');
-
-		// Flow without amount
-		if (flow.length === 1) {
-			// Make sure only one account is without amount
-			if (flowWithoutAmount !== null) throw new Error('Amount can be omitted at only one account');
-			flowWithoutAmount = flow[0];
-			continue;
-		}
-
-		flows[flow[0]] = parseFloat(flow[1]);
-		sum += parseFloat(flow[1]) * (invert.test(flow[0]) ? -1 : 1);
-	}
-	if (flowWithoutAmount !== null) {
-		// Fill the account without amount with
-		flows[flowWithoutAmount] = sum * (invert.test(flowWithoutAmount) ? 1 : -1);
+		flows[flow[0]] = (flow.length === 2 && flow[1] !== '') ? parseFloat(flow[1]) : null;
 	}
 
 	// Prepare transaction meta data

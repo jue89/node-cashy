@@ -364,6 +364,45 @@ describe('accounting', function () {
 		q.shouldResolve(test, (rows) => assert.strictEqual(rows.cnt, 2), done);
 	});
 
+	it('should create a new transaction and fillin amount for flows with null', (done) => {
+		let a = new Accounting({ file: ':memory:' });
+		let test = Promise.all([
+			a.createAccount({ id: 'test1', dateOpened: new Date(0) }),
+			a.createAccount({ id: 'test2', dateOpened: new Date(0) })
+		]).then(() => a.addTransaction({
+			reason: 'Test',
+			date: new Date(100),
+			data: null
+		}, {
+			test1: 1,
+			test2: null
+		})).then(() => a.getTransactions());
+		q.shouldResolve(test, (t) => assert.deepEqual(t, [ {
+			id: 1,
+			reason: 'Test',
+			commited: false,
+			date: new Date(100),
+			data: null,
+			flow: { test1: 1, test2: -1 }
+		} ]), done);
+	});
+
+	it('should complain about two transacions having null', (done) => {
+		let a = new Accounting({ file: ':memory:' });
+		let test = Promise.all([
+			a.createAccount({ id: 'test1', dateOpened: new Date(0) }),
+			a.createAccount({ id: 'test2', dateOpened: new Date(0) })
+		]).then(() => a.addTransaction({
+			reason: 'Test',
+			date: new Date(100),
+			data: null
+		}, {
+			test1: null,
+			test2: null
+		}));
+		q.shouldReject(test, 'Amount can be omitted at only one account', done);
+	});
+
 	it('should return id of created transaction', (done) => {
 		let a = new Accounting({ file: ':memory:' });
 		let test = Promise.all([
