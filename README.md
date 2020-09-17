@@ -51,7 +51,7 @@ Listing all transactions may help you to get a better overview what happened wit
 
 ![Display all transactions](doc/all_transactions.png)
 
-Here you can see the balances of all accounts. It may seems confusing but at this point the balance of the account at hipster bank is actually positive. A negative value on asset accounts means you *own* money. A positive value says you *owe* money. This is due to the fact that transactions always must be positive. If you think this is confusing write a little wrapper inverting all amounts at assets accounts ;)
+Here you can see the balances of all accounts. It may seems confusing but at this point the balance of the account at hipster bank is actually positive. A negative value on asset accounts means you *own* money. A positive value says you *owe* money. This is due to the fact that transactions always must be positive. ~~If you think this is confusing write a little wrapper inverting all amounts at assets accounts ;)~~ Good news: The latest version has the invert feature. Check out the [API page](doc/API.md).
 
 ![Display balances of all accounts](doc/balances.png)
 

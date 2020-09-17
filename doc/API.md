@@ -16,6 +16,7 @@ Opens the database and returns an instance of Cashy.
 
 Object ```options``` may contain:
  * ```file```: Path to the database file. Required.
+ * ```invert```: String of a regular expression. If an account matches this regular expression, its balances and transaction amounts are multiplied with -1.
  * ```accuracy```: Decimal places stored in the database. More precise amounts will be rounded half away from zero. If the database already exists the precision the database was created with will be used instead. May be between 0 and 7. Default: 2.
  * ```create```: Boolean indicator if a new database file should be created if the stated is not present. Default: true.
 

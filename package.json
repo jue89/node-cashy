@@ -1,6 +1,6 @@
 {
   "name": "cashy",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Bookkeeping stuff",
   "keywords": [
     "ledger",
@@ -22,25 +22,25 @@
     "test": "test"
   },
   "scripts": {
-    "test": "mocha",
-    "pretest": "jshint lib/*.js lib/accounting/*.js bin/* bin/cmds/*.js bin/lib/*.js"
+    "pretest": "happiness",
+    "test": "mocha"
   },
   "devDependencies": {
-    "jshint": "^2.9.4",
+    "happiness": "^10.0.2",
     "mocha": "^3.3.0"
   },
-  "jshintConfig": {
-    "esversion": 6,
-    "node": true,
-    "strict": true,
-    "varstmt": true,
-    "loopfunc": true,
-    "proto": true
+  "happiness": {
+    "globals": [
+      "describe",
+      "it",
+      "before",
+      "after"
+    ]
   },
   "dependencies": {
     "cli-color": "^1.2.0",
     "commander": "^2.9.0",
     "json-gate": "^0.8.23",
-    "sqlite3": "^3.1.8"
+    "sqlite3": "^5.0.0"
   }
 }
